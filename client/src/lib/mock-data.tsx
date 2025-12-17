@@ -219,6 +219,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(true);
     await new Promise(resolve => setTimeout(resolve, 1000));
     
+    const newUser: User = {
+      id: `u${Date.now()}`,
+      fullName: data.name,
+      email: data.email,
+      phone: data.phone,
+      role: 'MEDIATOR',
+      status: 'PENDING',
+      createdAt: new Date().toISOString()
+    };
+    
+    MOCK_USERS.push(newUser);
+
     toast({
       title: "Registo submetido",
       description: "A sua conta foi criada e está pendente de aprovação."

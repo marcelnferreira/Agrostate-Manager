@@ -9,19 +9,25 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search, Filter, Check, X, Ban } from "lucide-react";
+import { Search, Filter, Check, X, Ban, RefreshCw } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
+import { useState } from "react";
 
 export default function AdminUsersPage() {
   const { user } = useAuth();
+  const [users, setUsers] = useState(api.getAllUsers()); // Use state to manage users
   
   if (!user || user.role !== 'ADMIN') return <div>Acesso negado</div>;
 
-  const users = api.getAllUsers();
+  // Refresh users list (useful if we add actions that modify the list later)
+  const refreshUsers = () => {
+    setUsers([...api.getAllUsers()]);
+  };
+
 
   const getStatusBadge = (status: string) => {
     switch(status) {
