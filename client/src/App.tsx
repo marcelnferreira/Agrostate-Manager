@@ -14,6 +14,8 @@ import PropertyEditorPage from "@/pages/property-editor-page";
 import PropertyDetailPage from "@/pages/property-detail-page"; // New Import
 import LeadsPage from "@/pages/leads-page";
 import LayoutShell from "@/components/layout-shell";
+import AdminPropertiesPage from "@/pages/admin-properties-page";
+import AdminUsersPage from "@/pages/admin-users-page";
 
 // Protected Route Wrapper
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
@@ -68,8 +70,14 @@ function Router() {
       <Route path="/admin">
         <ProtectedRoute component={DashboardPage} />
       </Route>
+      <Route path="/admin/properties">
+        <ProtectedRoute component={AdminPropertiesPage} />
+      </Route>
       <Route path="/admin/users">
-        <ProtectedRoute component={() => <div className="text-center p-12">Gestão de Utilizadores (Admin)</div>} />
+        <ProtectedRoute component={AdminUsersPage} />
+      </Route>
+      <Route path="/admin/leads">
+        <ProtectedRoute component={LeadsPage} />
       </Route>
 
       <Route component={NotFound} />

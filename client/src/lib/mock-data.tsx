@@ -252,7 +252,9 @@ export const api = {
   getProperties: () => MOCK_PROPERTIES,
   getProperty: (id: string) => MOCK_PROPERTIES.find(p => p.id === id),
   getUserProperties: (userId: string) => MOCK_PROPERTIES.filter(p => p.ownerMediatorId === userId),
+  getAllLeads: () => MOCK_LEADS,
   getLeads: (mediatorId: string) => MOCK_LEADS.filter(l => l.mediatorId === mediatorId),
+  getUser: (id: string) => MOCK_USERS.find(u => u.id === id),
   getAllUsers: () => MOCK_USERS, // Admin only
   deleteProperty: (id: string) => {
     // In a real app this would delete from server
