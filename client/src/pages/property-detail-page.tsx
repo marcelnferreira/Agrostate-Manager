@@ -1,5 +1,5 @@
 import { useRoute, Link } from "wouter";
-import { api, Property } from "@/lib/mock-data";
+import { api, Property, useAuth } from "@/lib/mock-data";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -24,6 +24,7 @@ import { useToast } from "@/hooks/use-toast";
 export default function PropertyDetailPage() {
   const [match, params] = useRoute("/properties/:id");
   const { toast } = useToast();
+  const { user } = useAuth();
   const [leadName, setLeadName] = useState("");
   const [leadEmail, setLeadEmail] = useState("");
   const [leadPhone, setLeadPhone] = useState("");
@@ -31,11 +32,20 @@ export default function PropertyDetailPage() {
   
   const property = params?.id ? api.getProperty(params.id) : undefined;
 
+  const getBackLink = () => {
+    if (!user) return "/";
+    if (user.role === 'ADMIN') return "/admin/properties";
+    if (property?.ownerMediatorId === user.id) return "/dashboard/properties";
+    return "/dashboard/external-properties";
+  };
+  
+  const backLink = getBackLink();
+
   if (!property) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center space-y-4">
         <h1 className="text-2xl font-serif font-bold">Propriedade não encontrada</h1>
-        <Link href="/">
+        <Link href={backLink}>
           <Button variant="outline"><ArrowLeft className="mr-2 h-4 w-4" /> Voltar</Button>
         </Link>
       </div>
@@ -83,7 +93,7 @@ export default function PropertyDetailPage() {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 p-8 container mx-auto">
-          <Link href="/">
+          <Link href={backLink}>
             <Button variant="outline" className="mb-6 bg-white/10 text-white border-white/20 hover:bg-white/20">
               <ArrowLeft className="mr-2 h-4 w-4" /> Voltar à Lista
             </Button>

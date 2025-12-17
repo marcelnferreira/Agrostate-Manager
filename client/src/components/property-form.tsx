@@ -25,7 +25,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Trash2, Plus, Upload, Image as ImageIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Property, api } from "@/lib/mock-data";
+import { Property, api, useAuth } from "@/lib/mock-data";
 
 const propertySchema = z.object({
   title: z.string().min(5, "Título muito curto"),
@@ -50,7 +50,10 @@ interface PropertyFormProps {
 export default function PropertyForm({ initialData, mode }: PropertyFormProps) {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
+  const { user } = useAuth();
   const [images, setImages] = useState<string[]>(initialData?.images || []);
+
+  const backLink = user?.role === 'ADMIN' ? "/admin/properties" : "/dashboard/properties";
 
   const form = useForm<PropertyFormValues>({
     resolver: zodResolver(propertySchema),
@@ -82,7 +85,7 @@ export default function PropertyForm({ initialData, mode }: PropertyFormProps) {
       description: "As alterações foram guardadas com sucesso."
     });
 
-    setLocation("/dashboard/properties");
+    setLocation(backLink);
   };
 
   const handleImageUpload = () => {
@@ -106,7 +109,7 @@ export default function PropertyForm({ initialData, mode }: PropertyFormProps) {
             {mode === 'create' ? 'Novo Anúncio' : 'Editar Anúncio'}
           </h1>
           <div className="flex gap-2">
-            <Button type="button" variant="outline" onClick={() => setLocation("/dashboard/properties")}>
+            <Button type="button" variant="outline" onClick={() => setLocation(backLink)}>
               Cancelar
             </Button>
             <Button type="submit" disabled={form.formState.isSubmitting}>
