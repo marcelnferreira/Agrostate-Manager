@@ -29,6 +29,16 @@ export default function AdminUsersPage() {
   };
 
 
+  const handleUpdateStatus = (id: string, status: 'ACTIVE' | 'SUSPENDED' | 'REJECTED') => {
+    if (status === 'REJECTED') {
+      // For mock purposes, maybe we delete or just suspend
+      api.updateUserStatus(id, 'SUSPENDED');
+    } else {
+      api.updateUserStatus(id, status);
+    }
+    refreshUsers();
+  };
+
   const getStatusBadge = (status: string) => {
     switch(status) {
       case 'ACTIVE': return <Badge className="bg-green-100 text-green-700 hover:bg-green-100">Ativo</Badge>;
@@ -94,16 +104,34 @@ export default function AdminUsersPage() {
                     <div className="flex justify-end gap-2">
                       {u.status === 'PENDING' && (
                         <>
-                          <Button size="icon" variant="ghost" className="text-green-600 hover:bg-green-50" title="Aprovar">
+                          <Button 
+                            size="icon" 
+                            variant="ghost" 
+                            className="text-green-600 hover:bg-green-50" 
+                            title="Aprovar"
+                            onClick={() => handleUpdateStatus(u.id, 'ACTIVE')}
+                          >
                             <Check className="w-4 h-4" />
                           </Button>
-                          <Button size="icon" variant="ghost" className="text-red-600 hover:bg-red-50" title="Rejeitar">
+                          <Button 
+                            size="icon" 
+                            variant="ghost" 
+                            className="text-red-600 hover:bg-red-50" 
+                            title="Rejeitar"
+                            onClick={() => handleUpdateStatus(u.id, 'REJECTED')}
+                          >
                             <X className="w-4 h-4" />
                           </Button>
                         </>
                       )}
                       {u.status === 'ACTIVE' && u.role !== 'ADMIN' && (
-                        <Button size="icon" variant="ghost" className="text-orange-600 hover:bg-orange-50" title="Suspender">
+                        <Button 
+                          size="icon" 
+                          variant="ghost" 
+                          className="text-orange-600 hover:bg-orange-50" 
+                          title="Suspender"
+                          onClick={() => handleUpdateStatus(u.id, 'SUSPENDED')}
+                        >
                           <Ban className="w-4 h-4" />
                         </Button>
                       )}

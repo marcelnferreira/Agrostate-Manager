@@ -277,6 +277,14 @@ export const api = {
     MOCK_LEADS.push(newLead);
     return newLead;
   },
+  updateUserStatus: (id: string, status: UserStatus) => {
+    const user = MOCK_USERS.find(u => u.id === id);
+    if (user) {
+      user.status = status;
+      return true;
+    }
+    return false;
+  },
   deleteProperty: (id: string) => {
     // In a real app this would delete from server
     console.log('Deleting property', id);
