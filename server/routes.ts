@@ -202,10 +202,10 @@ export async function registerRoutes(
   app.post("/api/properties", requireAuth, async (req, res) => {
     try {
       const validatedData = insertPropertySchema.parse(req.body);
-      const property = await storage.createProperty({
-        ...validatedData,
-        ownerMediatorId: req.session.userId!,
-      });
+      const property = await storage.createProperty(
+        validatedData,
+        req.session.userId!
+      );
       res.json(property);
     } catch (error: any) {
       res.status(400).json({ error: error.message });

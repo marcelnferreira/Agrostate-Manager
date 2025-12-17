@@ -118,12 +118,16 @@ export default function PropertyForm({ initialData, mode }: PropertyFormProps) {
   });
 
   const onSubmit = async (data: PropertyFormValues) => {
-    const propertyData = { ...data, images };
+    const propertyData = { 
+      ...data, 
+      images,
+      socialLinks: JSON.stringify(data.socialLinks)
+    };
     
     if (mode === 'create') {
-      createPropertyMutation.mutate(propertyData);
+      createPropertyMutation.mutate(propertyData as any);
     } else if (initialData?.id) {
-      updatePropertyMutation.mutate({ id: initialData.id, data: propertyData });
+      updatePropertyMutation.mutate({ id: initialData.id, data: propertyData as any });
     }
   };
 

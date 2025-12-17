@@ -60,6 +60,7 @@ export const insertPropertySchema = createInsertSchema(properties).omit({
   id: true,
   createdAt: true,
   referenceId: true,
+  ownerMediatorId: true,
 }).extend({
   socialLinks: z.string().optional().default('[]'),
 });

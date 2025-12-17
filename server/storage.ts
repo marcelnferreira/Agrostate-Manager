@@ -20,7 +20,7 @@ export interface IStorage {
   getProperty(id: string): Promise<Property | undefined>;
   getProperties(): Promise<Property[]>;
   getUserProperties(userId: string): Promise<Property[]>;
-  createProperty(property: InsertProperty): Promise<Property>;
+  createProperty(property: InsertProperty, ownerMediatorId: string): Promise<Property>;
   updateProperty(id: string, property: Partial<InsertProperty>): Promise<Property | undefined>;
   deleteProperty(id: string): Promise<boolean>;
   
@@ -79,7 +79,7 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(properties).where(eq(properties.ownerMediatorId, userId));
   }
 
-  async createProperty(insertProperty: InsertProperty): Promise<Property> {
+  async createProperty(insertProperty: InsertProperty, ownerMediatorId: string): Promise<Property> {
     // Generate reference ID
     const count = await db.select({ count: sql`count(*)` }).from(properties);
     const referenceId = `REF-${new Date().getFullYear()}-${String(Number(count[0].count) + 1).padStart(3, '0')}`;
@@ -87,6 +87,7 @@ export class DatabaseStorage implements IStorage {
     const [property] = await db.insert(properties).values({
       ...insertProperty,
       referenceId,
+      ownerMediatorId,
     }).returning();
     return property;
   }
