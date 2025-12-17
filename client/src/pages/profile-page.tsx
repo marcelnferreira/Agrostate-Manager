@@ -16,10 +16,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
+import { LeadDialog } from "@/components/lead-dialog";
+import { useState } from "react";
 
 export default function ProfilePage() {
   const { user, logout } = useAuth();
   const { toast } = useToast();
+  const [refreshKey, setRefreshKey] = useState(0);
 
   if (!user) return null;
 
@@ -33,6 +36,10 @@ export default function ProfilePage() {
       });
       logout();
     }
+  };
+
+  const handleLeadAdded = () => {
+    setRefreshKey(prev => prev + 1);
   };
 
   return (
@@ -121,9 +128,7 @@ export default function ProfilePage() {
               Registe e gerencie os potenciais compradores.
             </p>
           </div>
-          <Button className="gap-2">
-            <Plus className="w-4 h-4" /> Adicionar Lead
-          </Button>
+          <LeadDialog onSuccess={handleLeadAdded} />
         </div>
 
         <div className="flex gap-2 mb-4">
@@ -142,45 +147,53 @@ export default function ProfilePage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Nome</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Telefone</TableHead>
                   <TableHead>NIF</TableHead>
                   <TableHead>Data</TableHead>
+                  <TableHead>Hora</TableHead>
                   <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {leads.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-12 text-muted-foreground">
+                    <TableCell colSpan={5} className="text-center py-12 text-muted-foreground">
                       <div className="flex flex-col items-center gap-2">
                         <div className="p-3 rounded-full bg-muted">
                           <UserIcon className="w-6 h-6 text-muted-foreground" />
                         </div>
                         <p>Ainda não tem leads registadas.</p>
-                        <Button variant="link" className="text-primary">
-                          Adicionar a primeira lead
-                        </Button>
+                        <LeadDialog 
+                          trigger={
+                            <Button variant="link" className="text-primary">
+                              Adicionar a primeira lead
+                            </Button>
+                          }
+                          onSuccess={handleLeadAdded}
+                        />
                       </div>
                     </TableCell>
                   </TableRow>
                 ) : (
-                  leads.map((lead) => (
-                    <TableRow key={lead.id}>
-                      <TableCell className="font-medium">{lead.name}</TableCell>
-                      <TableCell>{lead.email}</TableCell>
-                      <TableCell>{lead.phone}</TableCell>
-                      <TableCell>{lead.nif}</TableCell>
-                      <TableCell>
-                        {format(new Date(lead.createdAt), "dd/MM/yyyy", { locale: pt })}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button variant="ghost" size="icon" title="Download Ficha PDF">
-                          <Download className="w-4 h-4" />
-                        </Button>
-                      </TableCell>
-                    </TableRow>
-                  ))
+                  leads.map((lead) => {
+                    const date = new Date(lead.createdAt);
+                    return (
+                      <TableRow key={lead.id}>
+                        <TableCell className="font-medium">{lead.name}</TableCell>
+                        <TableCell>{lead.nif}</TableCell>
+                        <TableCell>
+                          {format(date, "dd/MM/yyyy", { locale: pt })}
+                        </TableCell>
+                         <TableCell>
+                          {format(date, "HH:mm", { locale: pt })}
+                        </TableCell>
+                        <TableCell className="text-right">
+                          <Button variant="ghost" size="icon" title="Transferir PDF">
+                            <Download className="w-4 h-4" />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })
                 )}
               </TableBody>
             </Table>

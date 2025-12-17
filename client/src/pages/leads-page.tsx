@@ -1,5 +1,5 @@
 import { useAuth, api } from "@/lib/mock-data";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
   Table,
@@ -9,18 +9,25 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Download, Search, Filter } from "lucide-react";
+import { Download, Search, Filter } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
+import { LeadDialog } from "@/components/lead-dialog";
+import { useState } from "react";
 
 export default function LeadsPage() {
   const { user } = useAuth();
+  const [refreshKey, setRefreshKey] = useState(0); // Simple way to refresh data
   
   if (!user) return null;
 
   const isAdmin = user.role === 'ADMIN';
   const leads = isAdmin ? api.getAllLeads() : api.getLeads(user.id);
+
+  const handleLeadAdded = () => {
+    setRefreshKey(prev => prev + 1);
+  };
 
   return (
     <div className="space-y-6">
@@ -34,9 +41,7 @@ export default function LeadsPage() {
           </p>
         </div>
         {!isAdmin && (
-          <Button className="gap-2">
-            <Plus className="w-4 h-4" /> Adicionar Lead
-          </Button>
+          <LeadDialog onSuccess={handleLeadAdded} />
         )}
       </div>
 
@@ -56,30 +61,34 @@ export default function LeadsPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Nome</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>Telefone</TableHead>
                 <TableHead>NIF</TableHead>
+                <TableHead>Data</TableHead>
+                <TableHead>Hora</TableHead>
                 {isAdmin && <TableHead>Mediador Responsável</TableHead>}
-                <TableHead>Data de Registo</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {leads.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={isAdmin ? 7 : 6} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={isAdmin ? 6 : 5} className="text-center py-8 text-muted-foreground">
                     Ainda não existem leads registadas.
                   </TableCell>
                 </TableRow>
               ) : (
                 leads.map((lead) => {
                   const mediator = isAdmin ? api.getUser(lead.mediatorId) : null;
+                  const date = new Date(lead.createdAt);
                   return (
                     <TableRow key={lead.id}>
                       <TableCell className="font-medium">{lead.name}</TableCell>
-                      <TableCell>{lead.email}</TableCell>
-                      <TableCell>{lead.phone}</TableCell>
                       <TableCell>{lead.nif}</TableCell>
+                      <TableCell>
+                        {format(date, "dd/MM/yyyy", { locale: pt })}
+                      </TableCell>
+                      <TableCell>
+                        {format(date, "HH:mm", { locale: pt })}
+                      </TableCell>
                       {isAdmin && (
                         <TableCell>
                           <span className="text-sm font-medium bg-muted px-2 py-1 rounded">
@@ -87,11 +96,8 @@ export default function LeadsPage() {
                           </span>
                         </TableCell>
                       )}
-                      <TableCell>
-                        {format(new Date(lead.createdAt), "PPP", { locale: pt })}
-                      </TableCell>
                       <TableCell className="text-right">
-                        <Button variant="ghost" size="icon" title="Download Ficha PDF">
+                        <Button variant="ghost" size="icon" title="Transferir PDF">
                           <Download className="w-4 h-4" />
                         </Button>
                       </TableCell>

@@ -256,6 +256,15 @@ export const api = {
   getLeads: (mediatorId: string) => MOCK_LEADS.filter(l => l.mediatorId === mediatorId),
   getUser: (id: string) => MOCK_USERS.find(u => u.id === id),
   getAllUsers: () => MOCK_USERS, // Admin only
+  addLead: (leadData: Omit<Lead, 'id' | 'createdAt'>) => {
+    const newLead: Lead = {
+      id: `l${Date.now()}`,
+      createdAt: new Date().toISOString(),
+      ...leadData
+    };
+    MOCK_LEADS.push(newLead);
+    return newLead;
+  },
   deleteProperty: (id: string) => {
     // In a real app this would delete from server
     console.log('Deleting property', id);
