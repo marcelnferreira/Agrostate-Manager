@@ -63,12 +63,35 @@ export default function PropertyDetailPage() {
 
   const handleLeadSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    toast({
-      title: "Interesse Registado!",
-      description: "O mediador responsável entrará em contacto brevemente."
-    });
-    setLeadName("");
-    setLeadEmail("");
+    
+    if (!property) return;
+
+    try {
+      api.addLead({
+        name: leadName,
+        email: leadEmail,
+        phone: leadPhone,
+        nif: leadNif,
+        mediatorId: property.ownerMediatorId,
+        propertyId: property.id
+      });
+
+      toast({
+        title: "Interesse Registado!",
+        description: "O mediador responsável entrará em contacto brevemente."
+      });
+      
+      setLeadName("");
+      setLeadEmail("");
+      setLeadPhone("");
+      setLeadNif("");
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Não foi possível registar o interesse."
+      });
+    }
   };
 
   const getSocialIcon = (platform: string) => {
@@ -128,12 +151,12 @@ export default function PropertyDetailPage() {
         </div>
       </div>
 
-      <div className="container mx-auto px-4 py-12 grid grid-cols-1 lg:grid-cols-3 gap-12">
+      <div className="container max-w-7xl mx-auto px-4 py-12 grid grid-cols-1 lg:grid-cols-3 gap-12">
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-8">
           {/* Social Links Section - Highlighted Feature */}
           {property.socialLinks && property.socialLinks.length > 0 && (
-            <div className="flex items-center gap-4 p-4 bg-muted/30 rounded-lg border border-border/50">
+            <div className="flex items-center justify-center lg:justify-start gap-4 p-4 bg-muted/30 rounded-lg border border-border/50">
               <span className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 <Share2 className="w-4 h-4" />
                 Multimédia & Social:
@@ -155,24 +178,24 @@ export default function PropertyDetailPage() {
             </div>
           )}
 
-          <div className="prose prose-lg max-w-none text-muted-foreground">
+          <div className="prose prose-lg max-w-none text-muted-foreground text-center lg:text-left">
             <h2 className="text-2xl font-serif font-bold text-foreground mb-4">Sobre a Propriedade</h2>
             <p className="whitespace-pre-line">{property.description}</p>
           </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-6 py-8 border-t border-b">
-            <div className="space-y-1">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-6 py-8 border-t border-b text-center lg:text-left">
+            <div className="space-y-1 flex flex-col items-center lg:items-start">
               <span className="text-sm text-muted-foreground uppercase tracking-wider">Referência</span>
               <p className="font-medium">{property.referenceId}</p>
             </div>
-            <div className="space-y-1">
+            <div className="space-y-1 flex flex-col items-center lg:items-start">
               <span className="text-sm text-muted-foreground uppercase tracking-wider">Área Total</span>
               <p className="font-medium flex items-center gap-1">
                 <Maximize className="w-4 h-4 text-primary" />
                 {property.areaHa} ha
               </p>
             </div>
-            <div className="space-y-1">
+            <div className="space-y-1 flex flex-col items-center lg:items-start">
               <span className="text-sm text-muted-foreground uppercase tracking-wider">Valor / ha</span>
               <p className="font-medium flex items-center gap-1">
                 <Euro className="w-4 h-4 text-primary" />
