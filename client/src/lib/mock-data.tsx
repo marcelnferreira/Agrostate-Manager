@@ -290,6 +290,7 @@ export const api = {
   getUserProperties: (userId: string) => MOCK_PROPERTIES.filter(p => p.ownerMediatorId === userId),
   getAllLeads: () => MOCK_LEADS,
   getLeads: (mediatorId: string) => MOCK_LEADS.filter(l => l.mediatorId === mediatorId),
+  getPropertyLeads: (propertyId: string) => MOCK_LEADS.filter(l => l.propertyId === propertyId),
   getUser: (id: string) => MOCK_USERS.find(u => u.id === id),
   getAllUsers: () => MOCK_USERS, // Admin only
   addLead: (leadData: Omit<Lead, 'id' | 'createdAt'>) => {

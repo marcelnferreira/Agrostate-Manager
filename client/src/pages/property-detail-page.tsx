@@ -16,10 +16,13 @@ import {
   Linkedin,
   Youtube,
   Globe,
-  Share2
+  Share2,
+  Users
 } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
+import { pt } from "date-fns/locale";
 
 export default function PropertyDetailPage() {
   const [match, params] = useRoute("/properties/:id");
@@ -40,6 +43,12 @@ export default function PropertyDetailPage() {
   };
   
   const backLink = getBackLink();
+
+  const isOwner = user?.id === property?.ownerMediatorId;
+  const isAdmin = user?.role === 'ADMIN';
+  const showLeads = isOwner || isAdmin;
+  
+  const leads = showLeads && property ? api.getPropertyLeads(property.id) : [];
 
   if (!property) {
     return (
@@ -171,62 +180,123 @@ export default function PropertyDetailPage() {
               </p>
             </div>
           </div>
+
+          {showLeads && (
+            <div className="space-y-6 pt-6">
+              <div className="flex items-center gap-2">
+                <Users className="w-5 h-5 text-primary" />
+                <h2 className="text-xl font-serif font-bold text-foreground">Leads Registadas</h2>
+              </div>
+              
+              <div className="rounded-md border">
+                <div className="relative w-full overflow-auto">
+                  <table className="w-full caption-bottom text-sm">
+                    <thead className="[&_tr]:border-b">
+                      <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
+                        <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Data</th>
+                        <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Nome</th>
+                        <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Contacto</th>
+                        {isAdmin && <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Mediador</th>}
+                      </tr>
+                    </thead>
+                    <tbody className="[&_tr:last-child]:border-0">
+                      {leads.length === 0 ? (
+                        <tr>
+                          <td colSpan={isAdmin ? 4 : 3} className="p-4 text-center text-muted-foreground">
+                            Ainda não existem leads registadas para este imóvel.
+                          </td>
+                        </tr>
+                      ) : (
+                        leads.map((lead) => {
+                          const mediator = isAdmin ? api.getUser(lead.mediatorId) : null;
+                          return (
+                            <tr key={lead.id} className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
+                              <td className="p-4 align-middle">
+                                {format(new Date(lead.createdAt), "dd MMM yyyy", { locale: pt })}
+                              </td>
+                              <td className="p-4 align-middle font-medium">{lead.name}</td>
+                              <td className="p-4 align-middle">
+                                <div className="flex flex-col">
+                                  <span>{lead.email}</span>
+                                  <span className="text-xs text-muted-foreground">{lead.phone}</span>
+                                </div>
+                              </td>
+                              {isAdmin && (
+                                <td className="p-4 align-middle">
+                                  <div className="flex flex-col">
+                                    <span className="font-medium">{mediator?.fullName || 'N/A'}</span>
+                                    <span className="text-xs text-muted-foreground">{mediator?.email}</span>
+                                  </div>
+                                </td>
+                              )}
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Sidebar Form */}
-        <div className="space-y-6">
-          <Card className="sticky top-24 shadow-lg border-t-4 border-t-primary">
-            <CardHeader>
-              <CardTitle className="font-serif">Tenho Interesse</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleLeadSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="name">Nome Completo</Label>
-                  <Input 
-                    id="name" 
-                    value={leadName}
-                    onChange={(e) => setLeadName(e.target.value)}
-                    required 
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input 
-                    id="email" 
-                    type="email" 
-                    value={leadEmail}
-                    onChange={(e) => setLeadEmail(e.target.value)}
-                    required 
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="phone">Telefone</Label>
-                  <Input 
-                    id="phone" 
-                    type="tel"
-                    value={leadPhone}
-                    onChange={(e) => setLeadPhone(e.target.value)} 
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="nif">NIF (Opcional)</Label>
-                  <Input 
-                    id="nif" 
-                    value={leadNif}
-                    onChange={(e) => setLeadNif(e.target.value)} 
-                  />
-                </div>
-                <Button type="submit" className="w-full h-12 text-lg mt-2">
-                  Contactar Mediador
-                </Button>
-                <p className="text-xs text-center text-muted-foreground pt-2">
-                  Ao submeter, concorda com a nossa política de privacidade.
-                </p>
-              </form>
-            </CardContent>
-          </Card>
-        </div>
+        {!showLeads && (
+          <div className="space-y-6">
+            <Card className="sticky top-24 shadow-lg border-t-4 border-t-primary">
+              <CardHeader>
+                <CardTitle className="font-serif">Tenho Interesse</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleLeadSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="name">Nome Completo</Label>
+                    <Input 
+                      id="name" 
+                      value={leadName}
+                      onChange={(e) => setLeadName(e.target.value)}
+                      required 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email</Label>
+                    <Input 
+                      id="email" 
+                      type="email" 
+                      value={leadEmail}
+                      onChange={(e) => setLeadEmail(e.target.value)}
+                      required 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Telefone</Label>
+                    <Input 
+                      id="phone" 
+                      type="tel"
+                      value={leadPhone}
+                      onChange={(e) => setLeadPhone(e.target.value)} 
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="nif">NIF (Opcional)</Label>
+                    <Input 
+                      id="nif" 
+                      value={leadNif}
+                      onChange={(e) => setLeadNif(e.target.value)} 
+                    />
+                  </div>
+                  <Button type="submit" className="w-full h-12 text-lg mt-2">
+                    Contactar Mediador
+                  </Button>
+                  <p className="text-xs text-center text-muted-foreground pt-2">
+                    Ao submeter, concorda com a nossa política de privacidade.
+                  </p>
+                </form>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
     </div>
   );
