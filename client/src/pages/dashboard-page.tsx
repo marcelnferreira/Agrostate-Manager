@@ -41,62 +41,72 @@ export default function DashboardPage() {
       <div className={`grid grid-cols-1 md:grid-cols-3 ${isAdmin ? 'lg:grid-cols-5' : ''} gap-6`}>
         {isAdmin && (
           <>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Utilizadores Registados
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{totalUsers}</div>
-              </CardContent>
-            </Card>
-            <Card>
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
-                  Contas Pendentes
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-orange-600">{pendingUsers}</div>
-              </CardContent>
-            </Card>
+            <Link href="/admin/users">
+              <Card className="cursor-pointer hover:bg-muted/50 transition-colors h-full">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Utilizadores Registados
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{totalUsers}</div>
+                </CardContent>
+              </Card>
+            </Link>
+            <Link href="/admin/users">
+              <Card className="cursor-pointer hover:bg-muted/50 transition-colors h-full">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    Contas Pendentes
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-orange-600">{pendingUsers}</div>
+                </CardContent>
+              </Card>
+            </Link>
           </>
         )}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Anúncios Ativos
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{properties.filter(p => p.status === 'ACTIVE').length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Leads Totais
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{isAdmin ? api.getAllLeads().length : leads.length}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Valor em Carteira
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(
-                properties.reduce((acc, curr) => acc + curr.price, 0)
-              )}
-            </div>
-          </CardContent>
-        </Card>
+        <Link href={isAdmin ? "/admin/properties" : "/dashboard/properties"}>
+          <Card className="cursor-pointer hover:bg-muted/50 transition-colors h-full">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Anúncios Ativos
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{properties.filter(p => p.status === 'ACTIVE').length}</div>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href={isAdmin ? "/admin/leads" : "/dashboard/leads"}>
+          <Card className="cursor-pointer hover:bg-muted/50 transition-colors h-full">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Leads Totais
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{isAdmin ? api.getAllLeads().length : leads.length}</div>
+            </CardContent>
+          </Card>
+        </Link>
+        <Link href={isAdmin ? "/admin/properties" : "/dashboard/properties"}>
+          <Card className="cursor-pointer hover:bg-muted/50 transition-colors h-full">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Valor em Carteira
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(
+                  properties.reduce((acc, curr) => acc + curr.price, 0)
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
 
       {/* Recent Properties Preview */}
