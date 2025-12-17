@@ -52,7 +52,7 @@ export interface Lead {
 }
 
 // Mock Data
-const MOCK_USERS: User[] = [
+const INITIAL_USERS: User[] = [
   {
     id: 'u1',
     fullName: 'Admin User',
@@ -81,6 +81,27 @@ const MOCK_USERS: User[] = [
     createdAt: '2023-12-10',
   }
 ];
+
+// Load users from localStorage or use initial data
+const getStoredUsers = (): User[] => {
+  try {
+    const stored = localStorage.getItem('agrostate_users_db');
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  } catch (e) {
+    console.error('Failed to load users from storage', e);
+  }
+  return INITIAL_USERS;
+};
+
+// Mutable users array initialized from storage
+let MOCK_USERS = getStoredUsers();
+
+// Helper to persist users
+const saveUsers = () => {
+  localStorage.setItem('agrostate_users_db', JSON.stringify(MOCK_USERS));
+};
 
 // Import assets (simulated)
 import heroImg from '@assets/generated_images/aerial_view_of_agricultural_land_and_farms.png';
@@ -230,6 +251,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
     
     MOCK_USERS.push(newUser);
+    saveUsers(); // Persist changes
 
     toast({
       title: "Registo submetido",
@@ -241,6 +263,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const logout = () => {
     setUser(null);
     localStorage.removeItem('agrostate_user');
+    // Use window.location.assign to avoid history stack issues if needed, but href is fine.
+    // Ensure we don't clear the 'agrostate_users_db' here!
     window.location.href = '/';
   };
 
@@ -281,6 +305,7 @@ export const api = {
     const user = MOCK_USERS.find(u => u.id === id);
     if (user) {
       user.status = status;
+      saveUsers(); // Persist changes
       return true;
     }
     return false;
