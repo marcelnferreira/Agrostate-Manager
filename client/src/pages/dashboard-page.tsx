@@ -13,6 +13,9 @@ export default function DashboardPage() {
   const isAdmin = user.role === 'ADMIN';
   const properties = isAdmin ? api.getProperties() : api.getUserProperties(user.id);
   const leads = api.getLeads(user.id);
+  const allUsers = isAdmin ? api.getAllUsers() : [];
+  const totalUsers = allUsers.length;
+  const pendingUsers = allUsers.filter(u => u.status === 'PENDING').length;
 
   return (
     <div className="space-y-8">
@@ -35,7 +38,31 @@ export default function DashboardPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className={`grid grid-cols-1 md:grid-cols-3 ${isAdmin ? 'lg:grid-cols-5' : ''} gap-6`}>
+        {isAdmin && (
+          <>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Utilizadores Registados
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{totalUsers}</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">
+                  Contas Pendentes
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-orange-600">{pendingUsers}</div>
+              </CardContent>
+            </Card>
+          </>
+        )}
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-medium text-muted-foreground">
@@ -53,7 +80,7 @@ export default function DashboardPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{leads.length}</div>
+            <div className="text-2xl font-bold">{isAdmin ? api.getAllLeads().length : leads.length}</div>
           </CardContent>
         </Card>
         <Card>
