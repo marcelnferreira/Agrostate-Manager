@@ -9,7 +9,8 @@ import {
   PlusCircle, 
   BriefcaseBusiness,
   Menu,
-  X
+  X,
+  Globe
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -59,6 +60,11 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
         ) : (
           <>
             <div className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/50 mt-2">
+              Mercado
+            </div>
+            <NavItem href="/dashboard/external-properties" icon={Globe} label="Anúncios Externos" />
+
+            <div className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/50 mt-6">
               Mediação
             </div>
             <NavItem href="/dashboard" icon={LayoutDashboard} label="Painel" exact />

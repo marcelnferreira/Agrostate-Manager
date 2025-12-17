@@ -17,6 +17,7 @@ import LayoutShell from "@/components/layout-shell";
 import AdminPropertiesPage from "@/pages/admin-properties-page";
 import AdminUsersPage from "@/pages/admin-users-page";
 import ProfilePage from "@/pages/profile-page";
+import ExternalPropertiesPage from "@/pages/external-properties-page"; // New Import
 
 // Protected Route Wrapper
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
@@ -63,6 +64,10 @@ function Router() {
         <ProtectedRoute component={LeadsPage} />
       </Route>
       
+      <Route path="/dashboard/external-properties">
+        <ProtectedRoute component={ExternalPropertiesPage} />
+      </Route>
+
       <Route path="/profile">
         <ProtectedRoute component={ProfilePage} />
       </Route>
