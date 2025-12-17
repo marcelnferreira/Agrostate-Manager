@@ -37,9 +37,10 @@ type LeadFormValues = z.infer<typeof leadSchema>;
 interface LeadDialogProps {
   trigger?: React.ReactNode;
   onSuccess?: () => void;
+  propertyId?: string;
 }
 
-export function LeadDialog({ trigger, onSuccess }: LeadDialogProps) {
+export function LeadDialog({ trigger, onSuccess, propertyId }: LeadDialogProps) {
   const [open, setOpen] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
@@ -61,11 +62,14 @@ export function LeadDialog({ trigger, onSuccess }: LeadDialogProps) {
       api.addLead({
         ...data,
         mediatorId: user.id,
+        propertyId: propertyId, // Associate with property if provided
       });
 
       toast({
         title: "Lead adicionada",
-        description: "A lead foi registada com sucesso na sua carteira.",
+        description: propertyId 
+          ? "Lead registada com sucesso para este imóvel." 
+          : "A lead foi registada com sucesso na sua carteira.",
       });
 
       setOpen(false);
