@@ -16,6 +16,7 @@ import LeadsPage from "@/pages/leads-page";
 import LayoutShell from "@/components/layout-shell";
 import AdminPropertiesPage from "@/pages/admin-properties-page";
 import AdminUsersPage from "@/pages/admin-users-page";
+import ProfilePage from "@/pages/profile-page";
 
 // Protected Route Wrapper
 function ProtectedRoute({ component: Component }: { component: React.ComponentType }) {
@@ -63,7 +64,7 @@ function Router() {
       </Route>
       
       <Route path="/profile">
-        <ProtectedRoute component={() => <div className="text-center p-12">Perfil do Utilizador (Em construção)</div>} />
+        <ProtectedRoute component={ProfilePage} />
       </Route>
 
       {/* Admin Routes */}
