@@ -1,4 +1,6 @@
-import { useAuth, api } from "@/lib/mock-data";
+import { useAuth } from "@/lib/auth";
+import { propertiesApi, usersApi } from "@/lib/api";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,9 +19,19 @@ import { Link } from "wouter";
 export default function AdminPropertiesPage() {
   const { user } = useAuth();
   
-  if (!user || user.role !== 'ADMIN') return <div>Acesso negado</div>;
+  const { data: properties = [], isLoading: loadingProperties } = useQuery({
+    queryKey: ['properties', 'all'],
+    queryFn: () => propertiesApi.getAll(),
+    enabled: user?.role === 'ADMIN',
+  });
 
-  const properties = api.getProperties();
+  const { data: users = [], isLoading: loadingUsers } = useQuery({
+    queryKey: ['users'],
+    queryFn: () => usersApi.getAll(),
+    enabled: user?.role === 'ADMIN',
+  });
+  
+  if (!user || user.role !== 'ADMIN') return <div>Acesso negado</div>;
 
   return (
     <div className="space-y-6">
@@ -63,7 +75,7 @@ export default function AdminPropertiesPage() {
                 </TableRow>
               ) : (
                 properties.map((property) => {
-                  const mediator = api.getUser(property.ownerMediatorId);
+                  const mediator = users.find(u => u.id === property.ownerMediatorId);
                   return (
                     <TableRow key={property.id}>
                       <TableCell className="font-mono text-xs">{property.referenceId}</TableCell>

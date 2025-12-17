@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { useAuth } from "@/lib/mock-data";
+import { useAuth } from "@/lib/auth";
 import { 
   LayoutDashboard, 
   Home, 

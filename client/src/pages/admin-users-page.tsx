@@ -1,4 +1,6 @@
-import { useAuth, api } from "@/lib/mock-data";
+import { useAuth } from "@/lib/auth";
+import { usersApi } from "@/lib/api";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,28 +17,43 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
-import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function AdminUsersPage() {
   const { user } = useAuth();
-  const [users, setUsers] = useState(api.getAllUsers()); // Use state to manage users
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const { data: users = [], isLoading } = useQuery({
+    queryKey: ['users'],
+    queryFn: () => usersApi.getAll(),
+    enabled: user?.role === 'ADMIN',
+  });
+
+  const updateStatusMutation = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: 'ACTIVE' | 'SUSPENDED' }) => 
+      usersApi.updateStatus(id, status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      toast({
+        title: "Status atualizado",
+        description: "O status do utilizador foi atualizado com sucesso.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: error.message || "Falha ao atualizar status do utilizador.",
+      });
+    },
+  });
   
   if (!user || user.role !== 'ADMIN') return <div>Acesso negado</div>;
 
-  // Refresh users list (useful if we add actions that modify the list later)
-  const refreshUsers = () => {
-    setUsers([...api.getAllUsers()]);
-  };
-
-
   const handleUpdateStatus = (id: string, status: 'ACTIVE' | 'SUSPENDED' | 'REJECTED') => {
-    if (status === 'REJECTED') {
-      // For mock purposes, maybe we delete or just suspend
-      api.updateUserStatus(id, 'SUSPENDED');
-    } else {
-      api.updateUserStatus(id, status);
-    }
-    refreshUsers();
+    const finalStatus = status === 'REJECTED' ? 'SUSPENDED' : status;
+    updateStatusMutation.mutate({ id, status: finalStatus });
   };
 
   const getStatusBadge = (status: string) => {

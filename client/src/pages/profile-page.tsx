@@ -1,4 +1,6 @@
-import { useAuth, api } from "@/lib/mock-data";
+import { useAuth } from "@/lib/auth";
+import { leadsApi } from "@/lib/api";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,16 +19,19 @@ import {
 } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { LeadDialog } from "@/components/lead-dialog";
-import { useState } from "react";
 
 export default function ProfilePage() {
   const { user, logout } = useAuth();
   const { toast } = useToast();
-  const [refreshKey, setRefreshKey] = useState(0);
+  const queryClient = useQueryClient();
+
+  const { data: leads = [], isLoading } = useQuery({
+    queryKey: ['leads'],
+    queryFn: () => leadsApi.getAll(),
+    enabled: !!user,
+  });
 
   if (!user) return null;
-
-  const leads = api.getLeads(user.id);
 
   const handleDeleteAccount = () => {
     if (confirm("Tem a certeza que deseja eliminar a sua conta? Esta ação é irreversível.")) {
@@ -39,7 +44,7 @@ export default function ProfilePage() {
   };
 
   const handleLeadAdded = () => {
-    setRefreshKey(prev => prev + 1);
+    queryClient.invalidateQueries({ queryKey: ['leads'] });
   };
 
   return (

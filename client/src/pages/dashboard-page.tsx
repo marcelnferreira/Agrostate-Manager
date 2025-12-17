@@ -1,4 +1,7 @@
-import { useAuth, api, Property } from "@/lib/mock-data";
+import { useAuth } from "@/lib/auth";
+import { propertiesApi, leadsApi, usersApi } from "@/lib/api";
+import { useQuery } from "@tanstack/react-query";
+import type { Property } from "@shared/schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Plus, Search, Filter } from "lucide-react";
@@ -8,12 +11,28 @@ import { Link } from "wouter";
 export default function DashboardPage() {
   const { user } = useAuth();
   
+  const isAdmin = user?.role === 'ADMIN';
+
+  const { data: properties = [], isLoading: loadingProperties } = useQuery({
+    queryKey: ['properties', isAdmin ? 'all' : 'my'],
+    queryFn: () => isAdmin ? propertiesApi.getAll() : propertiesApi.getMy(),
+    enabled: !!user,
+  });
+
+  const { data: leads = [], isLoading: loadingLeads } = useQuery({
+    queryKey: ['leads'],
+    queryFn: () => leadsApi.getAll(),
+    enabled: !!user,
+  });
+
+  const { data: allUsers = [], isLoading: loadingUsers } = useQuery({
+    queryKey: ['users'],
+    queryFn: () => usersApi.getAll(),
+    enabled: isAdmin,
+  });
+
   if (!user) return null;
 
-  const isAdmin = user.role === 'ADMIN';
-  const properties = isAdmin ? api.getProperties() : api.getUserProperties(user.id);
-  const leads = api.getLeads(user.id);
-  const allUsers = isAdmin ? api.getAllUsers() : [];
   const totalUsers = allUsers.length;
   const pendingUsers = allUsers.filter(u => u.status === 'PENDING').length;
 
@@ -87,7 +106,7 @@ export default function DashboardPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{isAdmin ? api.getAllLeads().length : leads.length}</div>
+              <div className="text-2xl font-bold">{leads.length}</div>
             </CardContent>
           </Card>
         </Link>

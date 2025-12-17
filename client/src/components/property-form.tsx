@@ -25,7 +25,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Trash2, Plus, Upload, Image as ImageIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { Property, api, useAuth } from "@/lib/mock-data";
+import { useAuth } from "@/lib/auth";
+import { propertiesApi } from "@/lib/api";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import type { Property } from "@shared/schema";
 
 const propertySchema = z.object({
   title: z.string().min(5, "Título muito curto"),
@@ -51,6 +54,7 @@ export default function PropertyForm({ initialData, mode }: PropertyFormProps) {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [images, setImages] = useState<string[]>(initialData?.images || []);
 
   const backLink = user?.role === 'ADMIN' ? "/admin/properties" : "/dashboard/properties";
@@ -73,19 +77,54 @@ export default function PropertyForm({ initialData, mode }: PropertyFormProps) {
     name: "socialLinks",
   });
 
+  const createPropertyMutation = useMutation({
+    mutationFn: propertiesApi.create,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['properties'] });
+      toast({
+        title: "Anúncio criado",
+        description: "As alterações foram guardadas com sucesso."
+      });
+      setLocation(backLink);
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: error.message || "Não foi possível criar o anúncio."
+      });
+    },
+  });
+
+  const updatePropertyMutation = useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<PropertyFormValues> }) => 
+      propertiesApi.update(id, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['properties'] });
+      queryClient.invalidateQueries({ queryKey: ['property'] });
+      toast({
+        title: "Anúncio atualizado",
+        description: "As alterações foram guardadas com sucesso."
+      });
+      setLocation(backLink);
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: error.message || "Não foi possível atualizar o anúncio."
+      });
+    },
+  });
+
   const onSubmit = async (data: PropertyFormValues) => {
-    // In a real app, we would send this to the API
-    console.log("Submitting:", { ...data, images });
+    const propertyData = { ...data, images };
     
-    // Simulate API call
-    await new Promise(r => setTimeout(r, 1000));
-
-    toast({
-      title: mode === 'create' ? "Anúncio criado" : "Anúncio atualizado",
-      description: "As alterações foram guardadas com sucesso."
-    });
-
-    setLocation(backLink);
+    if (mode === 'create') {
+      createPropertyMutation.mutate(propertyData);
+    } else if (initialData?.id) {
+      updatePropertyMutation.mutate({ id: initialData.id, data: propertyData });
+    }
   };
 
   const handleImageUpload = () => {
@@ -112,8 +151,8 @@ export default function PropertyForm({ initialData, mode }: PropertyFormProps) {
             <Button type="button" variant="outline" onClick={() => setLocation(backLink)}>
               Cancelar
             </Button>
-            <Button type="submit" disabled={form.formState.isSubmitting}>
-              {form.formState.isSubmitting ? "A guardar..." : "Guardar Anúncio"}
+            <Button type="submit" disabled={createPropertyMutation.isPending || updatePropertyMutation.isPending}>
+              {(createPropertyMutation.isPending || updatePropertyMutation.isPending) ? "A guardar..." : "Guardar Anúncio"}
             </Button>
           </div>
         </div>

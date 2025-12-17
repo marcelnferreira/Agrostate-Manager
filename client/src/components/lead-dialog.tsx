@@ -22,7 +22,9 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
-import { api, useAuth } from "@/lib/mock-data";
+import { useAuth } from "@/lib/auth";
+import { leadsApi } from "@/lib/api";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Plus } from "lucide-react";
 
 const leadSchema = z.object({
@@ -44,6 +46,7 @@ export function LeadDialog({ trigger, onSuccess, propertyId }: LeadDialogProps) 
   const [open, setOpen] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const form = useForm<LeadFormValues>({
     resolver: zodResolver(leadSchema),
@@ -55,33 +58,37 @@ export function LeadDialog({ trigger, onSuccess, propertyId }: LeadDialogProps) 
     },
   });
 
-  const onSubmit = async (data: LeadFormValues) => {
-    if (!user) return;
-
-    try {
-      api.addLead({
-        ...data,
-        mediatorId: user.id,
-        propertyId: propertyId, // Associate with property if provided
-      });
-
+  const createLeadMutation = useMutation({
+    mutationFn: leadsApi.create,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['leads'] });
       toast({
         title: "Lead adicionada",
         description: propertyId 
           ? "Lead registada com sucesso para este imóvel." 
           : "A lead foi registada com sucesso na sua carteira.",
       });
-
       setOpen(false);
       form.reset();
       if (onSuccess) onSuccess();
-    } catch (error) {
+    },
+    onError: (error: Error) => {
       toast({
         variant: "destructive",
         title: "Erro",
-        description: "Não foi possível adicionar a lead.",
+        description: error.message || "Não foi possível adicionar a lead.",
       });
-    }
+    },
+  });
+
+  const onSubmit = async (data: LeadFormValues) => {
+    if (!user) return;
+
+    createLeadMutation.mutate({
+      ...data,
+      mediatorId: user.id,
+      propertyId: propertyId,
+    });
   };
 
   return (

@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { useAuth } from "@/lib/mock-data";
+import { useAuth } from "@/lib/auth";
+import { authApi } from "@/lib/api";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,41 +8,91 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useToast } from "@/hooks/use-toast";
 import logoImg from "@assets/generated_images/minimalist_logo_icon_for_agrostate.png";
 import heroImg from "@assets/generated_images/aerial_view_of_agricultural_land_and_farms.png";
 
 export default function AuthPage() {
-  const { login, register, isLoading } = useAuth();
+  const { login } = useAuth();
   const [, setLocation] = useLocation();
+  const { toast } = useToast();
   
   // Login State
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loginLoading, setLoginLoading] = useState(false);
 
   // Register State
   const [regName, setRegName] = useState("");
   const [regEmail, setRegEmail] = useState("");
   const [regPhone, setRegPhone] = useState("");
+  const [regNif, setRegNif] = useState("");
   const [regPass, setRegPass] = useState("");
   const [regConfirmPass, setRegConfirmPass] = useState("");
   const [terms, setTerms] = useState(false);
   const [privacy, setPrivacy] = useState(false);
   const [agreement, setAgreement] = useState(false);
+  const [registerLoading, setRegisterLoading] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    await login(email);
-    setLocation("/dashboard");
+    setLoginLoading(true);
+    try {
+      await login(email, password);
+      setLocation("/dashboard");
+    } catch (error: any) {
+      toast({
+        title: "Erro ao entrar",
+        description: error.message || "Erro desconhecido",
+        variant: "destructive",
+      });
+    } finally {
+      setLoginLoading(false);
+    }
   };
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     if (regPass !== regConfirmPass) {
-      alert("As passwords não coincidem");
+      toast({
+        title: "Erro",
+        description: "As passwords não coincidem",
+        variant: "destructive",
+      });
       return;
     }
-    await register({ name: regName, email: regEmail, phone: regPhone });
-    // Stay on page to show pending message or redirect to a 'check email' page
+    setRegisterLoading(true);
+    try {
+      await authApi.register({
+        fullName: regName,
+        email: regEmail,
+        phone: regPhone,
+        nif: regNif || undefined,
+        password: regPass,
+      });
+      toast({
+        title: "Conta criada com sucesso",
+        description: "Aguarde aprovação do administrador para aceder à plataforma.",
+      });
+      // Clear form
+      setRegName("");
+      setRegEmail("");
+      setRegPhone("");
+      setRegNif("");
+      setRegPass("");
+      setRegConfirmPass("");
+      setTerms(false);
+      setPrivacy(false);
+      setAgreement(false);
+    } catch (error: any) {
+      toast({
+        title: "Erro ao criar conta",
+        description: error.message || "Erro desconhecido",
+        variant: "destructive",
+      });
+    } finally {
+      setRegisterLoading(false);
+    }
   };
 
   return (
@@ -80,8 +131,8 @@ export default function AuthPage() {
 
           <Tabs defaultValue="login" className="w-full">
             <TabsList className="grid w-full grid-cols-2 mb-6">
-              <TabsTrigger value="login">Entrar</TabsTrigger>
-              <TabsTrigger value="register">Criar Conta</TabsTrigger>
+              <TabsTrigger value="login" data-testid="tab-login">Entrar</TabsTrigger>
+              <TabsTrigger value="register" data-testid="tab-register">Criar Conta</TabsTrigger>
             </TabsList>
 
             <TabsContent value="login">
@@ -101,6 +152,7 @@ export default function AuthPage() {
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required 
+                        data-testid="input-email"
                       />
                     </div>
                     <div className="space-y-2">
@@ -111,6 +163,7 @@ export default function AuthPage() {
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
                         required 
+                        data-testid="input-password"
                       />
                       <div className="text-right">
                         <Button variant="link" className="px-0 text-xs text-muted-foreground">
@@ -120,8 +173,8 @@ export default function AuthPage() {
                     </div>
                   </CardContent>
                   <CardFooter>
-                    <Button type="submit" className="w-full" disabled={isLoading}>
-                      {isLoading ? "A entrar..." : "Entrar"}
+                    <Button type="submit" className="w-full" disabled={loginLoading} data-testid="button-login">
+                      {loginLoading ? "A entrar..." : "Entrar"}
                     </Button>
                   </CardFooter>
                 </form>
@@ -143,6 +196,7 @@ export default function AuthPage() {
                         value={regName} 
                         onChange={(e) => setRegName(e.target.value)}
                         required 
+                        data-testid="input-name"
                       />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
@@ -154,6 +208,7 @@ export default function AuthPage() {
                           value={regEmail}
                           onChange={(e) => setRegEmail(e.target.value)}
                           required 
+                          data-testid="input-register-email"
                         />
                       </div>
                       <div className="space-y-2">
@@ -164,8 +219,18 @@ export default function AuthPage() {
                           value={regPhone}
                           onChange={(e) => setRegPhone(e.target.value)}
                           required 
+                          data-testid="input-phone"
                         />
                       </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="reg-nif">NIF (opcional)</Label>
+                      <Input 
+                        id="reg-nif" 
+                        value={regNif}
+                        onChange={(e) => setRegNif(e.target.value)}
+                        data-testid="input-nif"
+                      />
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
@@ -176,6 +241,7 @@ export default function AuthPage() {
                           value={regPass}
                           onChange={(e) => setRegPass(e.target.value)}
                           required 
+                          data-testid="input-register-password"
                         />
                       </div>
                       <div className="space-y-2">
@@ -186,6 +252,7 @@ export default function AuthPage() {
                           value={regConfirmPass}
                           onChange={(e) => setRegConfirmPass(e.target.value)}
                           required 
+                          data-testid="input-confirm-password"
                         />
                       </div>
                     </div>
@@ -197,6 +264,7 @@ export default function AuthPage() {
                           checked={agreement} 
                           onCheckedChange={(c) => setAgreement(c as boolean)} 
                           required
+                          data-testid="checkbox-agreement"
                         />
                         <Label htmlFor="agreement" className="text-xs leading-tight font-normal text-muted-foreground">
                           Li e aceito o <a href="#" className="underline text-primary">Acordo de Mediação e Partilha</a>
@@ -208,6 +276,7 @@ export default function AuthPage() {
                           checked={terms} 
                           onCheckedChange={(c) => setTerms(c as boolean)} 
                           required
+                          data-testid="checkbox-terms"
                         />
                         <Label htmlFor="terms" className="text-xs leading-tight font-normal text-muted-foreground">
                           Aceito os <a href="#" className="underline text-primary">Termos e Condições</a>
@@ -219,6 +288,7 @@ export default function AuthPage() {
                           checked={privacy} 
                           onCheckedChange={(c) => setPrivacy(c as boolean)} 
                           required
+                          data-testid="checkbox-privacy"
                         />
                         <Label htmlFor="privacy" className="text-xs leading-tight font-normal text-muted-foreground">
                           Aceito a <a href="#" className="underline text-primary">Política de Privacidade</a>
@@ -227,8 +297,13 @@ export default function AuthPage() {
                     </div>
                   </CardContent>
                   <CardFooter>
-                    <Button type="submit" className="w-full" disabled={!terms || !privacy || !agreement || isLoading}>
-                      {isLoading ? "A submeter..." : "Criar Conta"}
+                    <Button 
+                      type="submit" 
+                      className="w-full" 
+                      disabled={!terms || !privacy || !agreement || registerLoading}
+                      data-testid="button-register"
+                    >
+                      {registerLoading ? "A submeter..." : "Criar Conta"}
                     </Button>
                   </CardFooter>
                 </form>

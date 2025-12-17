@@ -1,4 +1,6 @@
-import { useAuth, api } from "@/lib/mock-data";
+import { useAuth } from "@/lib/auth";
+import { leadsApi, usersApi } from "@/lib/api";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,19 +16,29 @@ import { Input } from "@/components/ui/input";
 import { format } from "date-fns";
 import { pt } from "date-fns/locale";
 import { LeadDialog } from "@/components/lead-dialog";
-import { useState } from "react";
 
 export default function LeadsPage() {
   const { user } = useAuth();
-  const [refreshKey, setRefreshKey] = useState(0); // Simple way to refresh data
+  const queryClient = useQueryClient();
+  
+  const isAdmin = user?.role === 'ADMIN';
+
+  const { data: leads = [], isLoading: loadingLeads } = useQuery({
+    queryKey: ['leads'],
+    queryFn: () => leadsApi.getAll(),
+    enabled: !!user,
+  });
+
+  const { data: users = [], isLoading: loadingUsers } = useQuery({
+    queryKey: ['users'],
+    queryFn: () => usersApi.getAll(),
+    enabled: isAdmin,
+  });
   
   if (!user) return null;
 
-  const isAdmin = user.role === 'ADMIN';
-  const leads = isAdmin ? api.getAllLeads() : api.getLeads(user.id);
-
   const handleLeadAdded = () => {
-    setRefreshKey(prev => prev + 1);
+    queryClient.invalidateQueries({ queryKey: ['leads'] });
   };
 
   return (
@@ -77,7 +89,7 @@ export default function LeadsPage() {
                 </TableRow>
               ) : (
                 leads.map((lead) => {
-                  const mediator = isAdmin ? api.getUser(lead.mediatorId) : null;
+                  const mediator = isAdmin ? users.find(u => u.id === lead.mediatorId) : null;
                   const date = new Date(lead.createdAt);
                   return (
                     <TableRow key={lead.id}>

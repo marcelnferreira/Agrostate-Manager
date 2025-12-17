@@ -1,5 +1,8 @@
 import { useRoute, Link } from "wouter";
-import { api, Property, useAuth } from "@/lib/mock-data";
+import { useAuth } from "@/lib/auth";
+import { propertiesApi, leadsApi, usersApi } from "@/lib/api";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import type { Property } from "@shared/schema";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -28,12 +31,55 @@ export default function PropertyDetailPage() {
   const [match, params] = useRoute("/properties/:id");
   const { toast } = useToast();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [leadName, setLeadName] = useState("");
   const [leadEmail, setLeadEmail] = useState("");
   const [leadPhone, setLeadPhone] = useState("");
   const [leadNif, setLeadNif] = useState("");
   
-  const property = params?.id ? api.getProperty(params.id) : undefined;
+  const { data: property, isLoading: loadingProperty } = useQuery({
+    queryKey: ['property', params?.id],
+    queryFn: () => propertiesApi.getById(params!.id),
+    enabled: !!params?.id,
+  });
+
+  const isOwner = user?.id === property?.ownerMediatorId;
+  const isAdmin = user?.role === 'ADMIN';
+  const showLeads = isOwner || isAdmin;
+
+  const { data: leads = [], isLoading: loadingLeads } = useQuery({
+    queryKey: ['leads', 'property', params?.id],
+    queryFn: () => leadsApi.getByPropertyId(params!.id),
+    enabled: showLeads && !!params?.id,
+  });
+
+  const { data: users = [] } = useQuery({
+    queryKey: ['users'],
+    queryFn: () => usersApi.getAll(),
+    enabled: isAdmin && leads.length > 0,
+  });
+
+  const createLeadMutation = useMutation({
+    mutationFn: leadsApi.create,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['leads'] });
+      toast({
+        title: "Interesse Registado!",
+        description: "O mediador responsável entrará em contacto brevemente."
+      });
+      setLeadName("");
+      setLeadEmail("");
+      setLeadPhone("");
+      setLeadNif("");
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: error.message || "Não foi possível registar o interesse."
+      });
+    },
+  });
 
   const getBackLink = () => {
     if (!user) return "/";
@@ -44,11 +90,9 @@ export default function PropertyDetailPage() {
   
   const backLink = getBackLink();
 
-  const isOwner = user?.id === property?.ownerMediatorId;
-  const isAdmin = user?.role === 'ADMIN';
-  const showLeads = isOwner || isAdmin;
-  
-  const leads = showLeads && property ? api.getPropertyLeads(property.id) : [];
+  if (loadingProperty) {
+    return <div className="p-8">A carregar...</div>;
+  }
 
   if (!property) {
     return (
@@ -61,37 +105,24 @@ export default function PropertyDetailPage() {
     );
   }
 
+  // Parse socialLinks if it's a string
+  const socialLinks = typeof property.socialLinks === 'string' 
+    ? JSON.parse(property.socialLinks || '[]') 
+    : property.socialLinks || [];
+
   const handleLeadSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!property) return;
+    if (!property || !user) return;
 
-    try {
-      api.addLead({
-        name: leadName,
-        email: leadEmail,
-        phone: leadPhone,
-        nif: leadNif,
-        mediatorId: property.ownerMediatorId,
-        propertyId: property.id
-      });
-
-      toast({
-        title: "Interesse Registado!",
-        description: "O mediador responsável entrará em contacto brevemente."
-      });
-      
-      setLeadName("");
-      setLeadEmail("");
-      setLeadPhone("");
-      setLeadNif("");
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Erro",
-        description: "Não foi possível registar o interesse."
-      });
-    }
+    createLeadMutation.mutate({
+      name: leadName,
+      email: leadEmail,
+      phone: leadPhone,
+      nif: leadNif,
+      mediatorId: property.ownerMediatorId,
+      propertyId: property.id,
+    });
   };
 
   const getSocialIcon = (platform: string) => {
@@ -155,14 +186,14 @@ export default function PropertyDetailPage() {
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-8">
           {/* Social Links Section - Highlighted Feature */}
-          {property.socialLinks && property.socialLinks.length > 0 && (
+          {socialLinks && socialLinks.length > 0 && (
             <div className="flex items-center justify-center lg:justify-start gap-4 p-4 bg-muted/30 rounded-lg border border-border/50">
               <span className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 <Share2 className="w-4 h-4" />
                 Multimédia & Social:
               </span>
               <div className="flex gap-2">
-                {property.socialLinks.map((link, idx) => (
+                {socialLinks.map((link: any, idx: number) => (
                   <a 
                     key={idx} 
                     href={link.url} 
@@ -231,7 +262,7 @@ export default function PropertyDetailPage() {
                         </tr>
                       ) : (
                         leads.map((lead) => {
-                          const mediator = isAdmin ? api.getUser(lead.mediatorId) : null;
+                          const mediator = isAdmin ? users.find(u => u.id === lead.mediatorId) : null;
                           return (
                             <tr key={lead.id} className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
                               <td className="p-4 align-middle">

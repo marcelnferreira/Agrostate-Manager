@@ -1,4 +1,6 @@
-import { useAuth, api } from "@/lib/mock-data";
+import { useAuth } from "@/lib/auth";
+import { propertiesApi } from "@/lib/api";
+import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Search, Filter, Eye, UserPlus } from "lucide-react";
@@ -10,10 +12,16 @@ import { LeadDialog } from "@/components/lead-dialog";
 export default function ExternalPropertiesPage() {
   const { user } = useAuth();
   
+  const { data: allProperties = [], isLoading } = useQuery({
+    queryKey: ['properties', 'all'],
+    queryFn: () => propertiesApi.getAll(),
+    enabled: !!user,
+  });
+
   if (!user) return <div>Acesso negado</div>;
 
   // Filter properties that do NOT belong to the current user
-  const properties = api.getProperties().filter(p => p.ownerMediatorId !== user.id);
+  const properties = allProperties.filter(p => p.ownerMediatorId !== user.id);
 
   return (
     <div className="space-y-6">

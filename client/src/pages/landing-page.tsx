@@ -2,13 +2,20 @@ import { Link } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { api } from "@/lib/mock-data";
+import { propertiesApi } from "@/lib/api";
+import { useQuery } from "@tanstack/react-query";
 import heroImg from "@assets/generated_images/aerial_view_of_agricultural_land_and_farms.png";
 import logoImg from "@assets/generated_images/minimalist_logo_icon_for_agrostate.png";
 import { MapPin, ArrowRight } from "lucide-react";
 
 export default function LandingPage() {
-  const featuredProperties = api.getProperties().slice(0, 3);
+  const { data: properties = [] } = useQuery({
+    queryKey: ['properties', 'all'],
+    queryFn: () => propertiesApi.getAll(),
+    enabled: true,
+  });
+
+  const featuredProperties = properties.slice(0, 3);
 
   return (
     <div className="min-h-screen flex flex-col">
