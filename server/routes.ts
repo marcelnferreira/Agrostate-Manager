@@ -1,10 +1,15 @@
-import type { Express } from "express";
+import express, { type Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertUserSchema, insertPropertySchema, insertLeadSchema } from "@shared/schema";
 import bcrypt from "bcryptjs";
 import session from "express-session";
 import memorystore from "memorystore";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
+import { fileURLToPath } from "url";
+import { dirname } from "path";
 
 const MemoryStore = memorystore(session);
 
@@ -18,6 +23,55 @@ export async function registerRoutes(
   httpServer: Server,
   app: Express
 ): Promise<Server> {
+  // AI_GENERATED_CODE_START
+  // Descrição: Configuração de upload de imagens com multer
+  // Gerado por: Cursor AI
+  // Versão: multer, express
+  // AI_GENERATED_CODE_END
+  
+  // Configurar diretório de uploads
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = dirname(__filename);
+  const uploadsDir = path.join(__dirname, "..", "uploads");
+  
+  // Criar diretório de uploads se não existir
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+  
+  // Configurar multer para salvar arquivos
+  const multerStorage = multer.diskStorage({
+    destination: (req, file, cb) => {
+      cb(null, uploadsDir);
+    },
+    filename: (req, file, cb) => {
+      const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+      const ext = path.extname(file.originalname);
+      cb(null, `image-${uniqueSuffix}${ext}`);
+    },
+  });
+  
+  const upload = multer({
+    storage: multerStorage,
+    limits: {
+      fileSize: 5 * 1024 * 1024, // 5MB
+    },
+    fileFilter: (req, file, cb) => {
+      const allowedTypes = /jpeg|jpg|png|gif|webp/;
+      const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+      const mimetype = allowedTypes.test(file.mimetype);
+      
+      if (extname && mimetype) {
+        cb(null, true);
+      } else {
+        cb(new Error("Apenas imagens são permitidas (JPG, PNG, GIF, WEBP)"));
+      }
+    },
+  });
+  
+  // Servir arquivos estáticos de uploads
+  app.use("/uploads", express.static(uploadsDir));
+  
   // Session middleware
   app.use(session({
     secret: process.env.SESSION_SECRET || 'agrostate-secret-key-change-in-production',
@@ -161,6 +215,26 @@ export async function registerRoutes(
   });
 
   // Property Routes
+  // Public endpoint for featured properties (landing page)
+  // IMPORTANT: This route must be defined BEFORE /api/properties/:id to avoid route conflicts
+  app.get("/api/properties/featured", async (req, res) => {
+    try {
+      // AI_GENERATED_CODE_START
+      // Descrição: Endpoint público para retornar top 3 propriedades em destaque
+      // Gerado por: Cursor AI
+      // Versão: Express, Node.js
+      // AI_GENERATED_CODE_END
+      // This is a public endpoint - no authentication required
+      // Explicitly allow requests without authentication
+      console.log('[DEBUG] /api/properties/featured - Public endpoint accessed');
+      const featuredProperties = await storage.getFeaturedProperties(3);
+      return res.json(featuredProperties);
+    } catch (error: any) {
+      console.error('[ERROR] /api/properties/featured:', error);
+      return res.status(500).json({ error: error.message });
+    }
+  });
+
   app.get("/api/properties", requireAuth, async (req, res) => {
     try {
       const user = await storage.getUser(req.session.userId!);
@@ -201,10 +275,45 @@ export async function registerRoutes(
 
   app.post("/api/properties", requireAuth, async (req, res) => {
     try {
+      // AI_GENERATED_CODE_START
+      // Descrição: Permitir que admin selecione o mediador principal ao criar propriedade
+      // Gerado por: Cursor AI
+      // Versão: Node.js, Express
+      // AI_GENERATED_CODE_END
+      
+      // Garantir que images seja um array
+      if (req.body.images && !Array.isArray(req.body.images)) {
+        req.body.images = [];
+      }
+      
       const validatedData = insertPropertySchema.parse(req.body);
+      const user = await storage.getUser(req.session.userId!);
+      
+      // Se for admin e forneceu ownerMediatorId, usar o fornecido, senão usar o userId da sessão
+      let ownerMediatorId = req.session.userId!;
+      if (user?.role === 'ADMIN' && validatedData.ownerMediatorId) {
+        // Validar que o ownerMediatorId fornecido existe e é um mediador
+        const selectedMediator = await storage.getUser(validatedData.ownerMediatorId);
+        if (!selectedMediator) {
+          return res.status(400).json({ error: "Mediador selecionado não encontrado" });
+        }
+        if (selectedMediator.role !== 'MEDIATOR') {
+          return res.status(400).json({ error: "O utilizador selecionado não é um mediador" });
+        }
+        ownerMediatorId = validatedData.ownerMediatorId;
+      }
+      
+      // Remover ownerMediatorId dos dados validados antes de passar para createProperty
+      const { ownerMediatorId: _, ...propertyData } = validatedData;
+      
+      // Garantir que images seja um array válido
+      if (!propertyData.images || !Array.isArray(propertyData.images)) {
+        propertyData.images = [];
+      }
+      
       const property = await storage.createProperty(
-        validatedData,
-        req.session.userId!
+        propertyData,
+        ownerMediatorId
       );
       res.json(property);
     } catch (error: any) {
@@ -224,6 +333,11 @@ export async function registerRoutes(
       const user = await storage.getUser(req.session.userId!);
       if (property.ownerMediatorId !== req.session.userId && user?.role !== 'ADMIN') {
         return res.status(403).json({ error: "Sem permissão para editar esta propriedade" });
+      }
+
+      // Garantir que images seja um array se fornecido
+      if (req.body.images && !Array.isArray(req.body.images)) {
+        req.body.images = [];
       }
 
       const updated = await storage.updateProperty(id, req.body);
@@ -288,6 +402,27 @@ export async function registerRoutes(
       res.json(lead);
     } catch (error: any) {
       res.status(400).json({ error: error.message });
+    }
+  });
+
+  // Upload Routes
+  app.post("/api/upload/image", requireAuth, upload.single("image"), async (req, res) => {
+    try {
+      // AI_GENERATED_CODE_START
+      // Descrição: Endpoint para upload de imagens de propriedades
+      // Gerado por: Cursor AI
+      // Versão: multer, express
+      // AI_GENERATED_CODE_END
+      
+      if (!req.file) {
+        return res.status(400).json({ error: "Nenhuma imagem enviada" });
+      }
+      
+      // Retornar URL da imagem
+      const imageUrl = `/uploads/${req.file.filename}`;
+      res.json({ url: imageUrl });
+    } catch (error: any) {
+      res.status(400).json({ error: error.message || "Erro ao fazer upload da imagem" });
     }
   });
 

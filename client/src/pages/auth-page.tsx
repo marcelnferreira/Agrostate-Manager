@@ -1,3 +1,8 @@
+// AI_GENERATED_CODE_START
+// Descrição: Adição de função helper para formatação de máscara internacional de telefone
+// Gerado por: Cursor AI
+// Versão: React 19.2.0
+// AI_GENERATED_CODE_END
 import { useState } from "react";
 import { useAuth } from "@/lib/auth";
 import { authApi } from "@/lib/api";
@@ -11,6 +16,103 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import logoImg from "@assets/generated_images/minimalist_logo_icon_for_agrostate.png";
 import heroImg from "@assets/generated_images/aerial_view_of_agricultural_land_and_farms.png";
+
+// AI_GENERATED_CODE_START
+// Descrição: Função para formatar número de telefone com máscara internacional
+// Gerado por: Cursor AI
+// Versão: React 19.2.0
+// AI_GENERATED_CODE_END
+const formatPhoneNumber = (value: string): string => {
+  // Remove todos os caracteres não numéricos, exceto o +
+  const cleaned = value.replace(/[^\d+]/g, '');
+  
+  // Se começar com +, mantém formato internacional
+  if (cleaned.startsWith('+')) {
+    // Remove o + temporariamente para processar apenas números
+    const afterPlus = (cleaned as any).slice(1);
+    const numbers = (afterPlus as any).replace(/\D/g, '');
+    
+    // Limita a 15 dígitos (padrão internacional E.164)
+    const limitedNumbers = (numbers as any).slice(0, 15);
+    
+    if (limitedNumbers.length === 0) {
+      return '+';
+    }
+    
+    // Formata com espaços para melhor legibilidade
+    // +351 912 345 678 (formato português)
+    if (limitedNumbers.startsWith('351') && limitedNumbers.length >= 4) {
+      const countryCode = (limitedNumbers as any).slice(0, 3);
+      const rest = (limitedNumbers as any).slice(3);
+      
+      if (rest.length <= 3) {
+        return `+${countryCode} ${rest}`;
+      } else if (rest.length <= 6) {
+        return `+${countryCode} ${rest.slice(0, 3)} ${rest.slice(3)}`;
+      } else {
+        return `+${countryCode} ${rest.slice(0, 3)} ${rest.slice(3, 6)} ${rest.slice(6, 9)}`;
+      }
+    }
+    
+    // Para outros países, formata de forma genérica
+    if (limitedNumbers.length <= 3) {
+      return `+${limitedNumbers}`;
+    } else if (limitedNumbers.length <= 6) {
+      return `+${limitedNumbers.slice(0, 3)} ${limitedNumbers.slice(3)}`;
+    } else if (limitedNumbers.length <= 9) {
+      return `+${limitedNumbers.slice(0, 3)} ${limitedNumbers.slice(3, 6)} ${limitedNumbers.slice(6)}`;
+    } else {
+      return `+${limitedNumbers.slice(0, 3)} ${limitedNumbers.slice(3, 6)} ${limitedNumbers.slice(6, 9)} ${limitedNumbers.slice(9)}`;
+    }
+  }
+  
+  // Se não começar com +, assume formato nacional e adiciona código de Portugal (+351)
+  const numbers = (cleaned as any).replace(/\D/g, '');
+  
+  // Se o número começar com 0, remove o 0 e adiciona +351
+  if (numbers.startsWith('0')) {
+    const withoutZero = (numbers as any).slice(1).slice(0, 9);
+    if (withoutZero.length === 0) {
+      return '+351';
+    } else if (withoutZero.length <= 3) {
+      return `+351 ${withoutZero}`;
+    } else if (withoutZero.length <= 6) {
+      return `+351 ${withoutZero.slice(0, 3)} ${withoutZero.slice(3)}`;
+    } else {
+      return `+351 ${withoutZero.slice(0, 3)} ${withoutZero.slice(3, 6)} ${withoutZero.slice(6)}`;
+    }
+  }
+  
+  // Se já tiver 9 dígitos (formato português), adiciona +351
+  if (numbers.length <= 9 && numbers.length > 0) {
+    const limited = (numbers as any).slice(0, 9);
+    if (limited.length <= 3) {
+      return `+351 ${limited}`;
+    } else if (limited.length <= 6) {
+      return `+351 ${limited.slice(0, 3)} ${limited.slice(3)}`;
+    } else {
+      return `+351 ${limited.slice(0, 3)} ${limited.slice(3, 6)} ${limited.slice(6)}`;
+    }
+  }
+  
+  // Se já tiver mais de 9 dígitos, assume que já inclui código do país
+  if (numbers.length > 9) {
+    const limited = (numbers as any).slice(0, 15);
+    if (limited.startsWith('351')) {
+      const rest = (limited as any).slice(3).slice(0, 9);
+      if (rest.length <= 3) {
+        return `+351 ${rest}`;
+      } else if (rest.length <= 6) {
+        return `+351 ${rest.slice(0, 3)} ${rest.slice(3)}`;
+      } else {
+        return `+351 ${rest.slice(0, 3)} ${rest.slice(3, 6)} ${rest.slice(6)}`;
+      }
+    }
+    return `+${limited}`;
+  }
+  
+  return numbers;
+};
 
 export default function AuthPage() {
   const { login } = useAuth();
@@ -111,10 +213,22 @@ export default function AuthPage() {
             <h1 className="text-2xl font-serif font-bold">Agrostate</h1>
           </div>
           <div>
-            <h2 className="text-4xl font-serif font-bold mb-4">A excelência na mediação agrícola.</h2>
+            <h2 className="text-4xl font-serif font-bold mb-4">Somos um social marketplace focado em imóveis rústicos.</h2>
             <p className="text-lg text-white/90 max-w-md">
-              Conectamos proprietários e investidores no setor agroimobiliário com transparência e profissionalismo.
-            </p>
+              Usamos redes sociais e portais imobiliários para dar máxima visibilidade ao mundo rural.
+              </p>
+              <p className="text-lg text-white/90 max-w-md">
+              Produzimos vídeos promocionais que revelam o potencial económico de cada propriedade.
+              </p>
+              <p className="text-lg text-white/90 max-w-md">
+              Atuamos como ligação entre mediadores, sustentados por uma rede sólida de parcerias.
+              </p>
+              <p>Objetivos:</p>
+              <ul>
+                <li>Visibilidade</li>
+                <li>Propostas</li>
+                <li>Vendas rápidas</li>
+              </ul>
           </div>
         </div>
       </div>
@@ -150,7 +264,7 @@ export default function AuthPage() {
                         type="email" 
                         placeholder="mediador@exemplo.com" 
                         value={email}
-                        onChange={(e) => setEmail(e.target.value)}
+                        onChange={(e: any) => setEmail(e.target.value)}
                         required 
                         data-testid="input-email"
                       />
@@ -161,7 +275,7 @@ export default function AuthPage() {
                         id="password" 
                         type="password" 
                         value={password}
-                        onChange={(e) => setPassword(e.target.value)}
+                        onChange={(e: any) => setPassword(e.target.value)}
                         required 
                         data-testid="input-password"
                       />
@@ -194,7 +308,7 @@ export default function AuthPage() {
                       <Input 
                         id="reg-name" 
                         value={regName} 
-                        onChange={(e) => setRegName(e.target.value)}
+                        onChange={(e: any) => setRegName(e.target.value)}
                         required 
                         data-testid="input-name"
                       />
@@ -206,7 +320,7 @@ export default function AuthPage() {
                           id="reg-email" 
                           type="email" 
                           value={regEmail}
-                          onChange={(e) => setRegEmail(e.target.value)}
+                          onChange={(e: any) => setRegEmail(e.target.value)}
                           required 
                           data-testid="input-register-email"
                         />
@@ -216,8 +330,12 @@ export default function AuthPage() {
                         <Input 
                           id="reg-phone" 
                           type="tel" 
+                          placeholder="+351 912 345 678"
                           value={regPhone}
-                          onChange={(e) => setRegPhone(e.target.value)}
+                          onChange={(e: any) => {
+                            const formatted = formatPhoneNumber(e.target.value);
+                            setRegPhone(formatted);
+                          }}
                           required 
                           data-testid="input-phone"
                         />
@@ -228,7 +346,7 @@ export default function AuthPage() {
                       <Input 
                         id="reg-nif" 
                         value={regNif}
-                        onChange={(e) => setRegNif(e.target.value)}
+                        onChange={(e: any) => setRegNif(e.target.value)}
                         data-testid="input-nif"
                       />
                     </div>
@@ -239,7 +357,7 @@ export default function AuthPage() {
                           id="reg-pass" 
                           type="password" 
                           value={regPass}
-                          onChange={(e) => setRegPass(e.target.value)}
+                          onChange={(e: any) => setRegPass(e.target.value)}
                           required 
                           data-testid="input-register-password"
                         />
@@ -250,7 +368,7 @@ export default function AuthPage() {
                           id="reg-confirm" 
                           type="password" 
                           value={regConfirmPass}
-                          onChange={(e) => setRegConfirmPass(e.target.value)}
+                          onChange={(e: any) => setRegConfirmPass(e.target.value)}
                           required 
                           data-testid="input-confirm-password"
                         />
@@ -262,7 +380,7 @@ export default function AuthPage() {
                         <Checkbox 
                           id="agreement" 
                           checked={agreement} 
-                          onCheckedChange={(c) => setAgreement(c as boolean)} 
+                          onCheckedChange={(c: any) => setAgreement(c as boolean)} 
                           required
                           data-testid="checkbox-agreement"
                         />
@@ -274,7 +392,7 @@ export default function AuthPage() {
                         <Checkbox 
                           id="terms" 
                           checked={terms} 
-                          onCheckedChange={(c) => setTerms(c as boolean)} 
+                          onCheckedChange={(c: any) => setTerms(c as boolean)} 
                           required
                           data-testid="checkbox-terms"
                         />
@@ -286,7 +404,7 @@ export default function AuthPage() {
                         <Checkbox 
                           id="privacy" 
                           checked={privacy} 
-                          onCheckedChange={(c) => setPrivacy(c as boolean)} 
+                          onCheckedChange={(c: any) => setPrivacy(c as boolean)} 
                           required
                           data-testid="checkbox-privacy"
                         />

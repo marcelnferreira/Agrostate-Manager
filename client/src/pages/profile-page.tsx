@@ -67,7 +67,7 @@ export default function ProfilePage() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <Label className="flex items-center gap-2 text-muted-foreground">
-                <Hash className="w-3 h-3" /> ID de Mediador
+                <Hash className="w-3 h-3" /> {user.role !== 'ADMIN' ? "ID de Mediador" : "ID de Administrador"}
               </Label>
               <Input value={user.id} readOnly className="bg-muted/50 font-mono" />
             </div>
@@ -109,14 +109,16 @@ export default function ProfilePage() {
           <p className="text-xs text-muted-foreground">
             Para alterar estes dados, contacte o suporte.
           </p>
-          <Button 
-            variant="destructive" 
-            size="sm" 
-            onClick={handleDeleteAccount}
-            className="gap-2"
-          >
-            <Trash2 className="w-4 h-4" /> Eliminar Conta
-          </Button>
+          {user.role !== 'ADMIN' && (
+            <Button 
+              variant="destructive" 
+              size="sm" 
+              onClick={handleDeleteAccount}
+              className="gap-2"
+            >
+              <Trash2 className="w-4 h-4" /> Eliminar Conta
+            </Button>
+          )}
         </CardFooter>
       </Card>
 

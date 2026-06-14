@@ -47,17 +47,15 @@ export default function DashboardPage() {
             Bem-vindo de volta, {user.fullName.split(' ')[0]}.
           </p>
         </div>
-        {!isAdmin && (
-          <Link href="/dashboard/properties/new">
-            <Button className="gap-2">
-              <Plus className="w-4 h-4" /> Criar Anúncio
-            </Button>
-          </Link>
-        )}
+        <Link href={isAdmin ? "/admin/properties/new" : "/dashboard/properties/new"}>
+          <Button className="gap-2">
+            <Plus className="w-4 h-4" /> Criar Anúncio
+          </Button>
+        </Link>
       </div>
 
       {/* Stats Cards */}
-      <div className={`grid grid-cols-1 md:grid-cols-3 ${isAdmin ? 'lg:grid-cols-5' : ''} gap-6`}>
+      <div className={`grid grid-cols-1 md:grid-cols-2 ${isAdmin ? 'lg:grid-cols-4' : ''} gap-6`}>
         {isAdmin && (
           <>
             <Link href="/admin/users">
@@ -110,22 +108,7 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
         </Link>
-        <Link href={isAdmin ? "/admin/properties" : "/dashboard/properties"}>
-          <Card className="cursor-pointer hover:bg-muted/50 transition-colors h-full">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-medium text-muted-foreground">
-                Valor em Carteira
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">
-                {new Intl.NumberFormat('pt-PT', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 }).format(
-                  properties.reduce((acc, curr) => acc + curr.price, 0)
-                )}
-              </div>
-            </CardContent>
-          </Card>
-        </Link>
+        
       </div>
 
       {/* Recent Properties Preview */}

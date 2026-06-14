@@ -5,7 +5,7 @@ import {
   type Property, type InsertProperty,
   type Lead, type InsertLead
 } from "@shared/schema";
-import { eq, and, sql } from "drizzle-orm";
+import { eq, and, sql, desc } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 
 export interface IStorage {
@@ -19,6 +19,7 @@ export interface IStorage {
   // Properties
   getProperty(id: string): Promise<Property | undefined>;
   getProperties(): Promise<Property[]>;
+  getFeaturedProperties(limit?: number): Promise<Property[]>;
   getUserProperties(userId: string): Promise<Property[]>;
   createProperty(property: InsertProperty, ownerMediatorId: string): Promise<Property>;
   updateProperty(id: string, property: Partial<InsertProperty>): Promise<Property | undefined>;
@@ -73,6 +74,19 @@ export class DatabaseStorage implements IStorage {
 
   async getProperties(): Promise<Property[]> {
     return await db.select().from(properties);
+  }
+
+  async getFeaturedProperties(limit: number = 3): Promise<Property[]> {
+    // AI_GENERATED_CODE_START
+    // Descrição: Buscar propriedades em destaque (ativas, ordenadas por data de criação, limitadas)
+    // Gerado por: Cursor AI
+    // Versão: Drizzle ORM
+    // AI_GENERATED_CODE_END
+    return await db.select()
+      .from(properties)
+      .where(eq(properties.status, 'ACTIVE'))
+      .orderBy(desc(properties.createdAt))
+      .limit(limit);
   }
 
   async getUserProperties(userId: string): Promise<Property[]> {

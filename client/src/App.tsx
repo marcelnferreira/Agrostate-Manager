@@ -79,6 +79,12 @@ function Router() {
       <Route path="/admin/properties">
         <ProtectedRoute component={AdminPropertiesPage} />
       </Route>
+      <Route path="/admin/properties/new">
+        <ProtectedRoute component={PropertyEditorPage} />
+      </Route>
+      <Route path="/admin/properties/:id">
+        <ProtectedRoute component={PropertyEditorPage} />
+      </Route>
       <Route path="/admin/users">
         <ProtectedRoute component={AdminUsersPage} />
       </Route>

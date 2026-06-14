@@ -48,14 +48,19 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
       </div>
 
       <div className="flex-1 px-4 py-4 space-y-1">
+      
+          <div className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/50 mt-2">
+          {user.role === 'ADMIN' ? ("Painel de Administração") : ("Painel do Mediador")}
+        </div>
+
+        <NavItem href="/profile" icon={Settings} label="Meu Perfil" />
         {user.role === 'ADMIN' ? (
           <>
-            <div className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/50 mt-2">
-              Administração
-            </div>
             <NavItem href="/admin" icon={LayoutDashboard} label="Dashboard" exact />
-            <NavItem href="/admin/users" icon={Users} label="Utilizadores" />
-            <NavItem href="/admin/properties" icon={Home} label="Todas as Propriedades" />
+            <NavItem href="/admin/users" icon={Users} label="Contas ativas" />
+            <NavItem href="/admin/properties" icon={Home} label="Meus Anúncios" />
+            <NavItem href="/dashboard/leads" icon={BriefcaseBusiness} label="Carteira de Leads" />
+            
           </>
         ) : (
           <>
@@ -73,10 +78,8 @@ export default function LayoutShell({ children }: { children: React.ReactNode })
           </>
         )}
 
-        <div className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-sidebar-foreground/50 mt-6">
-          Conta
-        </div>
-        <NavItem href="/profile" icon={Settings} label="Perfil" />
+        
+        
       </div>
 
       <div className="p-4 border-t border-sidebar-border">

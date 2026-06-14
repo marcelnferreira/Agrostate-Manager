@@ -75,6 +75,17 @@ export const usersApi = {
 
 // Properties API
 export const propertiesApi = {
+  async getFeatured(): Promise<Property[]> {
+    // AI_GENERATED_CODE_START
+    // Descrição: Buscar propriedades em destaque (top 3) para landing page
+    // Gerado por: Cursor AI
+    // Versão: Fetch API
+    // AI_GENERATED_CODE_END
+    const res = await fetch(`${API_BASE}/properties/featured`);
+    if (!res.ok) throw new Error("Failed to fetch featured properties");
+    return res.json();
+  },
+
   async getAll(): Promise<Property[]> {
     const res = await fetch(`${API_BASE}/properties`, {
       credentials: "include",
@@ -169,5 +180,32 @@ export const leadsApi = {
       throw new Error(error.error || "Failed to create lead");
     }
     return res.json();
+  },
+};
+
+// Upload API
+export const uploadApi = {
+  // AI_GENERATED_CODE_START
+  // Descrição: Função para upload de imagens
+  // Gerado por: Cursor AI
+  // Versão: Fetch API
+  // AI_GENERATED_CODE_END
+  async uploadImage(file: File): Promise<string> {
+    const formData = new FormData();
+    formData.append("image", file);
+    
+    const res = await fetch(`${API_BASE}/upload/image`, {
+      method: "POST",
+      body: formData,
+      credentials: "include",
+    });
+    
+    if (!res.ok) {
+      const error = await res.json();
+      throw new Error(error.error || "Falha ao fazer upload da imagem");
+    }
+    
+    const data = await res.json();
+    return data.url;
   },
 };

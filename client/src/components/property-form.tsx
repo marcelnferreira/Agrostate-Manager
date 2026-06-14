@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -26,11 +26,11 @@ import { Separator } from "@/components/ui/separator";
 import { Trash2, Plus, Upload, Image as ImageIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/lib/auth";
-import { propertiesApi } from "@/lib/api";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { propertiesApi, usersApi, uploadApi } from "@/lib/api";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import type { Property } from "@shared/schema";
 
-const propertySchema = z.object({
+const basePropertySchema = z.object({
   title: z.string().min(5, "Título muito curto"),
   description: z.string().min(20, "Descrição muito curta"),
   location: z.string().min(2, "Localização obrigatória"),
@@ -43,7 +43,14 @@ const propertySchema = z.object({
   }))
 });
 
-type PropertyFormValues = z.infer<typeof propertySchema>;
+const propertySchema = basePropertySchema;
+const propertySchemaWithMediator = basePropertySchema.extend({
+  ownerMediatorId: z.string().min(1, "Selecione um mediador")
+});
+
+type PropertyFormValues = z.infer<typeof basePropertySchema> & {
+  ownerMediatorId?: string;
+};
 
 interface PropertyFormProps {
   initialData?: Property;
@@ -51,16 +58,36 @@ interface PropertyFormProps {
 }
 
 export default function PropertyForm({ initialData, mode }: PropertyFormProps) {
+  // AI_GENERATED_CODE_START
+  // Descrição: Adicionar suporte para seleção de mediador quando admin cria novo anúncio
+  // Gerado por: Cursor AI
+  // Versão: React 18.2.0, TypeScript 4.9.5
+  // AI_GENERATED_CODE_END
+  
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [images, setImages] = useState<string[]>(initialData?.images || []);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const backLink = user?.role === 'ADMIN' ? "/admin/properties" : "/dashboard/properties";
+  const isAdmin = user?.role === 'ADMIN';
+  const isAdminCreating = isAdmin && mode === 'create';
+  const backLink = isAdmin ? "/admin/properties" : "/dashboard/properties";
+
+  // Buscar lista de usuários quando for admin criando novo anúncio
+  const { data: allUsers = [] } = useQuery({
+    queryKey: ['users'],
+    queryFn: () => usersApi.getAll(),
+    enabled: isAdminCreating,
+  });
+
+  // Filtrar apenas mediadores ativos
+  const mediators = allUsers.filter(u => u.role === 'MEDIATOR' && u.status === 'ACTIVE');
 
   const form = useForm<PropertyFormValues>({
-    resolver: zodResolver(propertySchema),
+    resolver: zodResolver(isAdminCreating ? propertySchemaWithMediator : propertySchema) as any,
     defaultValues: {
       title: initialData?.title || "",
       description: initialData?.description || "",
@@ -68,7 +95,8 @@ export default function PropertyForm({ initialData, mode }: PropertyFormProps) {
       areaHa: initialData?.areaHa || 0,
       price: initialData?.price || 0,
       mediationType: initialData?.mediationType || "OPEN",
-      socialLinks: initialData?.socialLinks || []
+      socialLinks: initialData?.socialLinks || [],
+      ...(isAdminCreating && { ownerMediatorId: user?.id || "" })
     },
   });
 
@@ -118,26 +146,85 @@ export default function PropertyForm({ initialData, mode }: PropertyFormProps) {
   });
 
   const onSubmit = async (data: PropertyFormValues) => {
-    const propertyData = { 
+    // AI_GENERATED_CODE_START
+    // Descrição: Garantir que images seja sempre um array válido ao enviar
+    // Gerado por: Cursor AI
+    // Versão: React 18.2.0, TypeScript 4.9.5
+    // AI_GENERATED_CODE_END
+    
+    const propertyData: any = { 
       ...data, 
-      images,
+      images: Array.isArray(images) ? images : [],
       socialLinks: JSON.stringify(data.socialLinks)
     };
     
+    // Se for admin criando novo anúncio, incluir ownerMediatorId
+    if (isAdminCreating && 'ownerMediatorId' in data) {
+      propertyData.ownerMediatorId = data.ownerMediatorId;
+    }
+    
     if (mode === 'create') {
-      createPropertyMutation.mutate(propertyData as any);
+      createPropertyMutation.mutate(propertyData);
     } else if (initialData?.id) {
-      updatePropertyMutation.mutate({ id: initialData.id, data: propertyData as any });
+      updatePropertyMutation.mutate({ id: initialData.id, data: propertyData });
     }
   };
 
+  // AI_GENERATED_CODE_START
+  // Descrição: Implementação de upload de imagens reais
+  // Gerado por: Cursor AI
+  // Versão: React 18.2.0, TypeScript 4.9.5
+  // AI_GENERATED_CODE_END
   const handleImageUpload = () => {
-    // Mock image upload
-    const mockImages = [
-      "https://images.unsplash.com/photo-1500382017468-9049fed747ef?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80",
-      "https://images.unsplash.com/photo-1472214103451-9374bd1c798e?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80"
-    ];
-    setImages([...images, mockImages[Math.floor(Math.random() * mockImages.length)]]);
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validar tipo de arquivo
+    const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"];
+    if (!allowedTypes.includes(file.type)) {
+      toast({
+        variant: "destructive",
+        title: "Formato inválido",
+        description: "Apenas imagens são permitidas (JPG, PNG, GIF, WEBP)",
+      });
+      return;
+    }
+
+    // Validar tamanho (5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        variant: "destructive",
+        title: "Arquivo muito grande",
+        description: "O tamanho máximo permitido é 5MB",
+      });
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const imageUrl = await uploadApi.uploadImage(file);
+      setImages([...images, imageUrl]);
+      toast({
+        title: "Imagem carregada",
+        description: "A imagem foi carregada com sucesso.",
+      });
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Erro ao carregar",
+        description: error.message || "Não foi possível carregar a imagem.",
+      });
+    } finally {
+      setIsUploading(false);
+      // Limpar input para permitir selecionar o mesmo arquivo novamente
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
   };
 
   const removeImage = (index: number) => {
@@ -266,6 +353,38 @@ export default function PropertyForm({ initialData, mode }: PropertyFormProps) {
                     )}
                   />
                 </div>
+
+                {isAdminCreating && (
+                  <FormField
+                    control={form.control}
+                    name="ownerMediatorId"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Mediador Principal</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione o mediador" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            {user && (
+                              <SelectItem value={user.id}>
+                                {user.fullName} (Eu)
+                              </SelectItem>
+                            )}
+                            {mediators.map((mediator) => (
+                              <SelectItem key={mediator.id} value={mediator.id}>
+                                {mediator.fullName} - {mediator.email}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                )}
               </CardContent>
             </Card>
 
@@ -357,11 +476,28 @@ export default function PropertyForm({ initialData, mode }: PropertyFormProps) {
                   <button
                     type="button"
                     onClick={handleImageUpload}
-                    className="aspect-square flex flex-col items-center justify-center border-2 border-dashed border-muted-foreground/25 rounded-md hover:border-primary hover:bg-primary/5 transition-colors text-muted-foreground"
+                    disabled={isUploading}
+                    className="aspect-square flex flex-col items-center justify-center border-2 border-dashed border-muted-foreground/25 rounded-md hover:border-primary hover:bg-primary/5 transition-colors text-muted-foreground disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <Upload className="w-6 h-6 mb-1" />
-                    <span className="text-xs">Carregar</span>
+                    {isUploading ? (
+                      <>
+                        <div className="w-6 h-6 mb-1 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+                        <span className="text-xs">A carregar...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="w-6 h-6 mb-1" />
+                        <span className="text-xs">Carregar</span>
+                      </>
+                    )}
                   </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
                 </div>
                 <p className="text-xs text-muted-foreground">
                   Formatos suportados: JPG, PNG. Max 5MB.

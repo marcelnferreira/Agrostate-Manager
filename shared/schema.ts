@@ -62,7 +62,9 @@ export const insertPropertySchema = createInsertSchema(properties).omit({
   referenceId: true,
   ownerMediatorId: true,
 }).extend({
+  images: z.array(z.string()).optional().default([]),
   socialLinks: z.string().optional().default('[]'),
+  ownerMediatorId: z.string().optional(), // Opcional para permitir que admin selecione o mediador
 });
 
 export const insertLeadSchema = createInsertSchema(leads).omit({

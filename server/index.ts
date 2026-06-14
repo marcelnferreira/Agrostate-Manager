@@ -1,3 +1,10 @@
+// AI_GENERATED_CODE_START
+// Descrição: Adicionando carregamento de variáveis de ambiente do arquivo .env
+// Gerado por: Cursor AI
+// Versão: dotenv ^16.0.0
+import "dotenv/config";
+// AI_GENERATED_CODE_END
+
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { serveStatic } from "./static";
@@ -85,14 +92,13 @@ app.use((req, res, next) => {
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
   const port = parseInt(process.env.PORT || "5000", 10);
-  httpServer.listen(
-    {
-      port,
-      host: "0.0.0.0",
-      reusePort: true,
-    },
-    () => {
-      log(`serving on port ${port}`);
-    },
-  );
+  // AI_GENERATED_CODE_START
+  // Descrição: Ajustando configuração do servidor para compatibilidade com Windows
+  // Gerado por: Cursor AI
+  // Versão: Node.js
+  // No Windows, reusePort não é suportado, então usamos apenas a porta
+  httpServer.listen(port, "0.0.0.0", () => {
+    log(`serving on port ${port}`);
+  });
+  // AI_GENERATED_CODE_END
 })();

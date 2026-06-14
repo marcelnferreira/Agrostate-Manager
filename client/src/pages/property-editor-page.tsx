@@ -5,12 +5,15 @@ import { useQuery } from "@tanstack/react-query";
 
 export default function PropertyEditorPage() {
   const [match, params] = useRoute("/dashboard/properties/:id");
-  const isEdit = match && params?.id !== "new";
+  const [adminMatch, adminParams] = useRoute("/admin/properties/:id");
+  const routeMatch = match || adminMatch;
+  const routeParams = params || adminParams;
+  const isEdit = routeMatch && routeParams?.id !== "new";
   
   const { data: property, isLoading } = useQuery({
-    queryKey: ['property', params?.id],
-    queryFn: () => propertiesApi.getById(params!.id),
-    enabled: isEdit && !!params?.id,
+    queryKey: ['property', routeParams?.id],
+    queryFn: () => propertiesApi.getById(routeParams!.id),
+    enabled: isEdit && !!routeParams?.id,
   });
 
   if (isEdit && !property && !isLoading) {

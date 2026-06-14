@@ -4,18 +4,24 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge";
 import { propertiesApi } from "@/lib/api";
 import { useQuery } from "@tanstack/react-query";
+import { useAuth } from "@/lib/auth";
+import type { Property } from "@shared/schema";
 import heroImg from "@assets/generated_images/aerial_view_of_agricultural_land_and_farms.png";
 import logoImg from "@assets/generated_images/minimalist_logo_icon_for_agrostate.png";
 import { MapPin, ArrowRight } from "lucide-react";
 
 export default function LandingPage() {
-  const { data: properties = [] } = useQuery({
-    queryKey: ['properties', 'all'],
-    queryFn: () => propertiesApi.getAll(),
+  // AI_GENERATED_CODE_START
+  // Descrição: Buscar top 3 propriedades em destaque para exibição na landing page
+  // Gerado por: Cursor AI
+  // Versão: React Query, TanStack Query
+  // AI_GENERATED_CODE_END
+  const { user } = useAuth();
+  const { data: featuredProperties = [] } = useQuery<Property[]>({
+    queryKey: ['properties', 'featured'],
+    queryFn: () => propertiesApi.getFeatured(),
     enabled: true,
   });
-
-  const featuredProperties = properties.slice(0, 3);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -38,7 +44,7 @@ export default function LandingPage() {
       </header>
 
       {/* Hero */}
-      <section className="relative h-[600px] flex items-center justify-center text-white overflow-hidden">
+      <section className="relative h-[300px] flex items-center justify-center text-white overflow-hidden">
         <div className="absolute inset-0 bg-black/40 z-10" />
         <img 
           src={heroImg} 
@@ -50,15 +56,8 @@ export default function LandingPage() {
             A sua terra, o nosso compromisso.
           </h1>
           <p className="text-xl md:text-2xl text-white/90 drop-shadow-md">
-            Especialistas em propriedades agrícolas e rurais em Portugal.
+            Somos um social marketplace focado em imóveis rústicos.
           </p>
-          <div className="pt-8">
-            <Link href="/auth">
-              <Button size="lg" className="text-lg px-8 h-14 bg-primary hover:bg-primary/90 border-0">
-                Ver Propriedades
-              </Button>
-            </Link>
-          </div>
         </div>
       </section>
 
@@ -70,17 +69,19 @@ export default function LandingPage() {
               <h2 className="text-3xl font-serif font-bold text-primary mb-2">Destaques</h2>
               <p className="text-muted-foreground">Oportunidades únicas selecionadas para si.</p>
             </div>
-            <Button variant="outline" className="hidden md:flex">Ver Todas</Button>
+            <Link href="/auth">
+              <Button variant="outline" className="hidden md:flex">Ver Todas</Button>
+            </Link>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {featuredProperties.map((property) => (
+            {featuredProperties.map((property: Property) => (
               <Card key={property.id} className="overflow-hidden hover:shadow-lg transition-shadow border-none shadow-md group">
-                <div className="relative aspect-[4/3] overflow-hidden">
+                <div className="relative aspect-[16/9] overflow-hidden">
                   <img 
                     src={property.images[0]} 
                     alt={property.title} 
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                    className="w-full h-full object-cover transition-transform duration-100 group-hover:scale-105"
                   />
                   <Badge className="absolute top-4 right-4 bg-white text-primary hover:bg-white/90">
                     {property.mediationType === 'EXCLUSIVE' ? 'Exclusivo' : 'Oportunidade'}
@@ -110,13 +111,15 @@ export default function LandingPage() {
                     </div>
                   </div>
                 </CardContent>
-                <CardFooter className="pt-0">
-                  <Link href={`/properties/${property.id}`}>
-                    <Button className="w-full variant-secondary group-hover:bg-primary group-hover:text-white transition-colors">
-                      Ver Detalhes <ArrowRight className="w-4 h-4 ml-2" />
-                    </Button>
-                  </Link>
-                </CardFooter>
+                {user && (
+                  <CardFooter className="pt-0">
+                    <Link href={`/properties/${property.id}`}>
+                      <Button className="w-full variant-secondary group-hover:bg-primary group-hover:text-white transition-colors">
+                        Ver Detalhes <ArrowRight className="w-4 h-4 ml-2" />
+                      </Button>
+                    </Link>
+                  </CardFooter>
+                )}
               </Card>
             ))}
           </div>
@@ -154,8 +157,8 @@ export default function LandingPage() {
           <div>
             <h4 className="font-bold mb-4">Contacto</h4>
             <ul className="space-y-2 text-sm opacity-80">
-              <li>info@agrostate.com</li>
-              <li>+351 210 000 000</li>
+              <li>admin@agrostate.com</li>
+              <li>+351 968 940 258</li>
             </ul>
           </div>
         </div>
